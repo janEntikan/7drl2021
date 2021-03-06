@@ -1,0 +1,53 @@
+[ta]
+  [ta.lr_a]
+  _type = "axis"
+  _device_order = ["gamepad", "keyboard"]
+  gamepad = "left_x"
+  keyboard = "arrow_right,arrow_left"
+
+  [ta.lr_b]
+  _type = "axis"
+  _device_order = ["keyboard"]
+  keyboard = "d,a"
+
+  [ta.ud_a]
+  _type = "axis"
+  _device_order = ["gamepad", "keyboard"]
+  gamepad = "left_y"
+  keyboard = "arrow_up,arrow_down"
+
+  [ta.ud_b]
+  _type = "axis"
+  _device_order = ["keyboard"]
+  keyboard = "w,s"
+
+  [ta.select_a]
+  _type = "trigger"
+  _device_order = ["gamepad", "keyboard"]
+  gamepad = "face_x"
+  keyboard = "enter"
+
+  [ta.select_b]
+  _type = "trigger"
+  _device_order = ["gamepad", "keyboard"]
+  gamepad = "face_x"
+  keyboard = "space"
+
+  [ta.inventory]
+  _type = "trigger"
+  _device_order = ["gamepad", "keyboard"]
+  gamepad = "face_y"
+  keyboard = "i"
+
+  [ta.character]
+  _type = "trigger"
+  _device_order = ["gamepad", "keyboard"]
+  gamepad = "face_a"
+  keyboard = "c"
+
+  [ta.menu]
+  _type = "trigger"
+  _device_order = ["gamepad", "keyboard"]
+  gamepad = "face_b"
+  keyboard = "escape"
+
