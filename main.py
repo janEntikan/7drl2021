@@ -19,7 +19,7 @@ from keybindings.device_listener import SinglePlayerAssigner
 
 from stars import create_star_sphere_geom_node
 from map import Room, Medical
-from creature import Creature
+from creature import Interface, Creature
 
 
 load_prc_file(
@@ -47,13 +47,6 @@ class SequencePlayer():
             self.sequence.finish()
             self.sequence = None
 
-
-class Interface():
-    def __init__(self):
-        pass
-
-    def update(self):
-        pass
 
 
 class Base(ShowBase):
@@ -84,15 +77,20 @@ class Base(ShowBase):
         room = Room(self.map, start_leaf)
         room.construct()
 
-        camera.set_pos(room.root.get_x()+10, room.root.get_y()-12, 10)
-        camera.look_at(room.root, (1,-1,0))
+        #camera.set_pos(room.root.get_x()+10, room.root.get_y()-12, 10)
 
         room.root.reparent_to(scene)
         self.player.root.reparent_to(scene)
         self.player.root.set_pos(room.root, (1,-1,0))
+
+
+        camera.reparent_to(self.player.root)
+        camera.set_pos(10,-12,10)
+        camera.look_at(self.player.root)
+        camera.setCompass()
         
         stars = create_star_sphere_geom_node(60, 1000)
-        self.stars = self.player.root.attach_new_node(stars)
+        self.stars = camera.attach_new_node(stars)
         self.stars.set_scale(30)
         def rotate_sky(task):
             self.stars.set_r(
@@ -101,6 +99,7 @@ class Base(ShowBase):
             )
             return task.cont
         base.task_mgr.add(rotate_sky)
+        base.task_mgr.add(self.update)
 
     def make_render_card(self, ortho_size=[8,5], resolution=[256,256]):
         scene = NodePath("Scene")
