@@ -1,7 +1,6 @@
 from direct.showbase.ShowBase import ShowBase
 from direct.showbase.Transitions import Transitions
 from direct.interval.IntervalGlobal import Sequence, Func
-from direct.actor.Actor import Actor
 
 from panda3d.core import load_prc_file
 from panda3d.core import Filename
@@ -19,7 +18,7 @@ from keybindings.device_listener import SinglePlayerAssigner
 
 from stars import create_star_sphere_geom_node
 from map import Room, Medical
-from creature import Interface, Creature
+from creature import Interface, Player
 
 
 load_prc_file(
@@ -66,23 +65,18 @@ class Base(ShowBase):
         card, scene, camera = self.make_render_card()
 
         self.map = Medical()
-        self.player = Creature(
-            "player", Actor("assets/models/player.bam")
-        )
+        self.player = Player()
+
         start_leaf = self.map.random_leaf()
         x, y, w, h = start_leaf.rect
         x = x + int(w/2)
         y = y + int(h/2)
-        self.player.root.set_pos(x, y, 0)
         room = Room(self.map, start_leaf)
         room.construct()
-
-        #camera.set_pos(room.root.get_x()+10, room.root.get_y()-12, 10)
 
         room.root.reparent_to(scene)
         self.player.root.reparent_to(scene)
         self.player.root.set_pos(room.root, (1,-1,0))
-
 
         camera.reparent_to(self.player.root)
         camera.set_pos(10,-12,10)

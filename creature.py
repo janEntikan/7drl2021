@@ -1,8 +1,11 @@
+from direct.actor.Actor import Actor
+
+
 class Interface(): # takes care of player logic and ai response
     def update(self):
         player = base.player
         context = base.device_listener.read_context('ew')
-        movement = None
+        new = movement = None
         current = player.root.get_pos()
         time = 0.33
 
@@ -14,7 +17,7 @@ class Interface(): # takes care of player logic and ai response
             new = (current.x, current.y+int(context["move"].y), 0)
             movement = player.root.posInterval(time, new, startPos=current)
             player.root.look_at(new)
-
+        
         if movement:
             if not player.root.getCurrentAnim() == "walk":
                 player.root.loop("walk")
@@ -29,5 +32,15 @@ class Creature():
         self.root = model
         self.root.setLODAnimation(2, 1, 0.0075)
         self.root.loop("idle")
+
+
+class Player(Creature):
+    def __init__(self):
+        Creature.__init__(self, "player", Actor("assets/models/player.bam"))
+        chest = self.root.find("**/torso")
+        chest.set_color((0,0,0,1))
+        legs = self.root.find("**/legs")
+        legs.set_color((0,0.5,0,1))
+
 
 

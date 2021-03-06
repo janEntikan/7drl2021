@@ -38,7 +38,6 @@ class Tile():
             if self.pos[1] == 0 or self.pos[1] == self.room.leaf.rect[3]:
                 door.set_h(90)
 
-
     def make_walls(self):
         f = self.room.map.tile_set["floor_a"].copy_to(self.root)
         if self.char == "=": 
@@ -62,7 +61,6 @@ class Room():
         self.root = render.attach_new_node("room")
         self.root.set_pos(self.leaf.rect[0], -self.leaf.rect[1], 0)
         self.tiles = []
-        self.doors = []
 
     def construct(self):
         self.fill()
