@@ -1,6 +1,7 @@
 from direct.showbase.ShowBase import ShowBase
 from direct.showbase.Transitions import Transitions
 from direct.interval.IntervalGlobal import Sequence, Func
+from direct.actor.Actor import Actor
 
 from panda3d.core import load_prc_file
 from panda3d.core import Filename
@@ -17,7 +18,7 @@ from keybindings.device_listener import add_device_listener
 from keybindings.device_listener import SinglePlayerAssigner
 
 from stars import create_star_sphere_geom_node
-from map import Room, Medical
+from map import Room
 from creature import Interface, Player
 
 
@@ -47,7 +48,6 @@ class SequencePlayer():
             self.sequence = None
 
 
-
 class Base(ShowBase):
     def __init__(self):
         ShowBase.__init__(self)
@@ -56,7 +56,7 @@ class Base(ShowBase):
             assigner=SinglePlayerAssigner(),
         )
         base.disableMouse() 
-
+        self.load_tile_set()
         self.cardmaker = CardMaker("card")
         self.cardmaker.set_frame(-1,1,-1,1)
         self.sequence_player = SequencePlayer()
@@ -64,19 +64,12 @@ class Base(ShowBase):
         self.interface = Interface()
         card, scene, camera = self.make_render_card()
 
-        self.map = Medical()
+
+        self.rooms = {}
+        room = self.rooms[(0,0)] = Room(0,0)
         self.player = Player()
-
-        start_leaf = self.map.random_leaf()
-        x, y, w, h = start_leaf.rect
-        x = x + int(w/2)
-        y = y + int(h/2)
-        room = Room(self.map, start_leaf)
-        room.construct()
-
-        room.root.reparent_to(scene)
-        self.player.root.reparent_to(scene)
-        self.player.root.set_pos(room.root, (1,-1,0))
+        self.player.root.reparent_to(room.root)
+        self.player.root.set_pos((2,-2,0))
 
         camera.reparent_to(self.player.root)
         camera.set_pos(10,-12,10)
@@ -94,6 +87,16 @@ class Base(ShowBase):
             return task.cont
         base.task_mgr.add(rotate_sky)
         base.task_mgr.add(self.update)
+
+    def load_tile_set(self, name="background"):
+        self.tile_set = {}
+        tile_set_root = loader.load_model("assets/models/"+name+".bam")
+        for child in tile_set_root.get_children():
+            self.tile_set[child.name] = child
+            child.detach_node()
+            child.clear_transform()
+        self.tile_set["door"] = Actor("assets/models/door.bam")
+
 
     def make_render_card(self, ortho_size=[8,5], resolution=[256,256]):
         scene = NodePath("Scene")
