@@ -64,18 +64,15 @@ class Base(ShowBase):
         self.interface = Interface()
         card, scene, camera = self.make_render_card()
 
-
         self.rooms = {}
-        room = self.rooms[(0,0)] = Room(0,0)
+        room = self.rooms[(32,32)] = Room(32,32)
         self.player = Player()
-        self.player.root.reparent_to(room.root)
-        self.player.root.set_pos((2,-2,0))
+        self.player.root.set_pos((32*9+1,-(32*9+1),0))
 
         camera.reparent_to(self.player.root)
         camera.set_pos(10,-12,10)
         camera.look_at(self.player.root)
         camera.setCompass()
-        
         stars = create_star_sphere_geom_node(60, 1000)
         self.stars = camera.attach_new_node(stars)
         self.stars.set_scale(30)
@@ -88,14 +85,14 @@ class Base(ShowBase):
         base.task_mgr.add(rotate_sky)
         base.task_mgr.add(self.update)
 
-    def load_tile_set(self, name="background"):
+    def load_tile_set(self, name="rnd"):
         self.tile_set = {}
-        tile_set_root = loader.load_model("assets/models/"+name+".bam")
+        tile_set_root = loader.load_model("assets/models/decks/"+name+".bam")
         for child in tile_set_root.get_children():
             self.tile_set[child.name] = child
             child.detach_node()
             child.clear_transform()
-        self.tile_set["door"] = Actor("assets/models/door.bam")
+        self.tile_set["door"] = Actor("assets/models/decks/doors.bam")
 
 
     def make_render_card(self, ortho_size=[8,5], resolution=[256,256]):
@@ -111,6 +108,8 @@ class Base(ShowBase):
         camera = base.make_camera(buffer)
         lens = OrthographicLens()
         lens.set_film_size(ortho_size[0], ortho_size[1])
+        lens.set_near(10)
+        lens.set_far(40)
         camera.node().set_lens(lens)
         camera.reparent_to(scene)
         card = render2d.attach_new_node(self.cardmaker.generate())

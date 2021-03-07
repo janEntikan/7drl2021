@@ -36,7 +36,7 @@ class Tile():
         self.root.flatten_strong() 
 
     def make_walls(self):
-        f = base.tile_set["floor_a"].copy_to(self.root)
+        f = base.tile_set["floor_0"].copy_to(self.root)
         if self.char == "=": 
             return
         light = self.pos[0]%2 == 1 and self.pos[1]%2 == 1 
@@ -46,19 +46,15 @@ class Tile():
             if self.surrounding[offset[1]][offset[0]]:
                 neighbour = self.surrounding[offset[1]][offset[0]]
                 if neighbour.char == "#":
-                    wall_type = "wall_a"
+                    wall_type = "wall_0"
                     w = base.tile_set[wall_type].copy_to(self.root)
                     heading = -angle*90 
                     w.set_h(heading)
                     if light:
                         l = base.tile_set["light"].copy_to(self.root)
                         l.set_h(heading)
-                    if vent and randint(0,1): 
-                        l = base.tile_set["vent"].copy_to(self.root)
-                        l.set_h(heading)
-                    a = choice(["table", "terminal","chairs"])
                     if not randint(0,16):
-                        l = base.tile_set[a].copy_to(self.root)
+                        l = base.tile_set["wall_prop_0"].copy_to(self.root)
                         l.set_h(heading)                        
 
 
@@ -72,7 +68,7 @@ class Door(Tile):
         if not self.char in "#":
             self.make_walls()
         self.root.flatten_strong() 
-        doorway = base.tile_set["doorway"].copy_to(self.root)
+        doorway = base.tile_set["doorway"].copy_to(self.room.dynamic)
         doorway.set_pos(self.pos[0],-self.pos[1],0)
         if not self.direction%2: doorway.set_h(90)
         self.door = base.tile_set["door"].copy_to(doorway)
@@ -103,6 +99,8 @@ class Room():
         self.rect = [(x*9),(y*9),9,9]
         self.root = render.attach_new_node("room")
         self.root.set_pos(self.rect[0], -self.rect[1], 0)
+        self.dynamic = render.attach_new_node("room_doors")
+        self.dynamic.set_pos(self.rect[0], -self.rect[1], 0)
         self.doors = [None,None,None,None]
         self.tiles = []
         self.back_direction = back_direction
@@ -147,6 +145,7 @@ class Room():
             for x in range(self.rect[2]):
                 self.tiles[y][x].get_surrounding_tiles()
                 self.tiles[y][x].make_mesh()
+        self.root.flatten_strong()
 
     def print(self):
         for y in range(self.rect[3]):

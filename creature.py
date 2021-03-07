@@ -4,9 +4,10 @@ from map import Room
 
 
 def round_vec3(vec3):
+    new = Vec3()
     for v, value in enumerate(vec3):
-        vec3[v] = int(value)
-    return vec3
+        new[v] = round(value)
+    return new
 
 
 class Interface(): # takes care of player logic and ai response
@@ -53,12 +54,24 @@ class Creature():
         self.root.reparent_to(render)
 
 
+
+class Weapon():
+    def __init__(self):
+        self.name = "spreadblaster"
+        self.damage = 10
+
+
 class Player(Creature):
     def __init__(self):
         Creature.__init__(
             self, "player", 
-            Actor("assets/models/player.bam")
+            Actor("assets/models/creatures/humanoid.bam")
         )
+
+        self.inventory = []
+
+        self.aim = []
+        self.weapon = Weapon()
 
         chest = self.root.find("**/torso")
         chest.set_color((0,0.1,0.1,1))
@@ -66,3 +79,13 @@ class Player(Creature):
         legs.set_color((0.02,0.02,0.02,1))
         #arms = self.root.find("**/arms")
         #arms.set_color((0.1,0.1,0.1,1))
+
+
+class Enemy(Creature):
+    def __init__(self, name, model):
+        Creature.__init__(self, name, model)
+
+
+
+
+
