@@ -1,5 +1,9 @@
 from random import randint, uniform, choice
 from direct.interval.LerpInterval import LerpFunc
+from collections import defaultdict
+from panda3d.core import NodePath
+from direct.actor.Actor import Actor
+from creature import Worm
 
 
 DIRS = [(0,1),(1, 0),(0, -1),(-1,0)]
@@ -7,10 +11,10 @@ LOCS = [(4, 8),(8, 4),(4, 0),(0, 4)]
 
 
 class Tile():
-    def __init__(self, room, pos, char="#"):
+    def __init__(self, room=None, pos=(0,0), char="#"):
         self.room = room
         self.pos = pos
-        self.root = room.root.attach_new_node("tile")
+        self.root = NodePath("tile")
         self.root.set_pos(pos[0], -pos[1], 0)
         self.char = char
         self.surrounding = [
@@ -24,21 +28,13 @@ class Tile():
             for sx in range(3):
                 x = self.pos[0]-1+sx
                 y = self.pos[1]-1+sy
-                try:
-                    t = self.room.tiles[y][x]
-                    self.surrounding[sy][sx] = t
-                except IndexError:
-                    self.surrounding[sy][sx] = Tile(self.room, (x,y), " ")
+                self.surrounding[sy][sx] = base.map.tiles[x,y]
 
     def make_mesh(self):
-        if not self.char in "#":
-            self.make_walls()
-        self.root.flatten_strong() 
+        self.make_walls()
 
     def make_walls(self):
-        f = base.tile_set["floor_0"].copy_to(self.root)
-        if self.char == "=": 
-            return
+        f = base.map.tile_set["floor_0"].copy_to(self.root)
         light = self.pos[0]%2 == 1 and self.pos[1]%2 == 1 
         vent = self.pos[0]%4 == 1 and self.pos[1]%4 == 1 
 
@@ -47,14 +43,14 @@ class Tile():
                 neighbour = self.surrounding[offset[1]][offset[0]]
                 if neighbour.char == "#":
                     wall_type = "wall_0"
-                    w = base.tile_set[wall_type].copy_to(self.root)
+                    w = base.map.tile_set[wall_type].copy_to(self.root)
                     heading = -angle*90 
                     w.set_h(heading)
                     if light:
-                        l = base.tile_set["light"].copy_to(self.root)
+                        l = base.map.tile_set["light"].copy_to(self.root)
                         l.set_h(heading)
                     if not randint(0,16):
-                        l = base.tile_set["wall_prop_0"].copy_to(self.root)
+                        l = base.map.tile_set["wall_prop_0"].copy_to(self.root)
                         l.set_h(heading)                        
 
 
@@ -65,13 +61,11 @@ class Door(Tile):
         self.open = open
 
     def make_mesh(self):
-        if not self.char in "#":
-            self.make_walls()
-        self.root.flatten_strong() 
-        doorway = base.tile_set["doorway"].copy_to(self.room.dynamic)
+        f = base.map.tile_set["floor_0"].copy_to(self.root)
+        doorway = base.map.tile_set["doorway"].copy_to(base.map.dynamic)
         doorway.set_pos(self.pos[0],-self.pos[1],0)
         if not self.direction%2: doorway.set_h(90)
-        self.door = base.tile_set["door"].copy_to(doorway)
+        self.door = base.map.tile_set["door"].copy_to(doorway)
         self.open_door(int(not self.open))
 
     def activate(self):
@@ -81,44 +75,32 @@ class Door(Tile):
             toData=0, duration=0.25,
         )
         base.sequence_player.add_to_sequence(lerp)
-        dir = DIRS[self.direction]
-        x = self.room.x+dir[0]
-        y = self.room.y+dir[1]
-        if not (x,y) in base.rooms:
-            base.rooms[(x,y)] = Room(x,y,(self.direction+2)%4)
+        self.room.append(self.direction)
 
     def open_door(self, value):
         chars = self.door.find_all_matches('**/+Character')
         for char in chars:
             char.node().get_bundle(0).freeze_joint("closed", value)
-        
+
 
 class Room():
     def __init__(self, x, y, back_direction=None):
         self.x, self.y = x, y
-        self.rect = [(x*9),(y*9),9,9]
+        self.rect = [self.x,self.y,9,9]
         self.root = render.attach_new_node("room")
-        self.root.set_pos(self.rect[0], -self.rect[1], 0)
-        self.dynamic = render.attach_new_node("room_doors")
-        self.dynamic.set_pos(self.rect[0], -self.rect[1], 0)
-        self.doors = [None,None,None,None]
-        self.tiles = []
         self.back_direction = back_direction
-        print(x, y, self.rect, self.back_direction)
-
         self.construct()
 
     def construct(self):
-        self.fill()
         self.generate()
         self.make_doors()
         self.finalize()
-        self.print()
+        base.map.enemies.append(Worm("fat",(self.x+4, -(self.y+4), 0)))
 
     def make_door(self, d=0, open=False):
-        x = LOCS[d][0]
-        y = LOCS[d][1]
-        self.tiles[y][x] = Door(self, [x,y], d, open=open)
+        x = LOCS[d][0]+self.x
+        y = LOCS[d][1]+self.y
+        base.map.tiles[x,y] = Door(self, [x,y], d, open=open)
 
     def make_doors(self):
         if not self.back_direction == None:
@@ -131,26 +113,40 @@ class Room():
     def generate(self):
         for y in range(self.rect[3]-2):
             for x in range(self.rect[2]-2):
-                tile = self.tiles[y+1][x+1]
-                tile.char = " "
-
-    def fill(self):
-        for y in range(self.rect[3]):
-            self.tiles.append([])
-            for x in range(self.rect[2]):
-                self.tiles[y].append(Tile(self,[x,y], "#"))
+                tx, ty = self.x+x+1,self.y+y+1
+                base.map.tiles[tx,ty] = Tile(self, [tx, ty], " ")
 
     def finalize(self):
         for y in range(self.rect[3]):
             for x in range(self.rect[2]):
-                self.tiles[y][x].get_surrounding_tiles()
-                self.tiles[y][x].make_mesh()
+                t = base.map.tiles[self.x+x,self.y+y]
+                if not t.char == "#":
+                    t.get_surrounding_tiles()
+                    t.make_mesh()
+                    t.root.reparent_to(self.root)
         self.root.flatten_strong()
 
-    def print(self):
-        for y in range(self.rect[3]):
-            s = ""
-            for x in range(self.rect[2]):
-                s += self.tiles[y][x].char
-            print(s)
+    def append(self, direction):
+        dir = DIRS[direction]
+        x,y,w,h = self.rect
+        x += dir[0]*(w-1)
+        y += dir[1]*(h-1)
+        Room(x, y, (direction+2)%4)
 
+
+class Map():
+    def __init__(self):
+        self.tiles = defaultdict(Tile)
+        self.static = render.attach_new_node("map-static")
+        self.dynamic = render.attach_new_node("map-dynamic")
+        self.enemies = []
+        self.load_tile_set()
+
+    def load_tile_set(self, name="engineering"):
+        self.tile_set = {}
+        tile_set_root = loader.load_model("assets/models/decks/"+name+".bam")
+        for child in tile_set_root.get_children():
+            self.tile_set[child.name] = child
+            child.detach_node()
+            child.clear_transform()
+        self.tile_set["door"] = Actor("assets/models/decks/doors.bam")

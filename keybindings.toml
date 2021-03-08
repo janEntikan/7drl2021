@@ -5,6 +5,12 @@
   gamepad = "left_x,left_y"
   keyboard = "arrow_left,arrow_right,arrow_down,arrow_up"
 
+  [ew.fire]
+  _type = "trigger"
+  _device_order = ["gamepad", "keyboard"]
+  gamepad = "face_x"
+  keyboard = "space"
+
   [ew.select]
   _type = "trigger"
   _device_order = ["gamepad", "keyboard"]
