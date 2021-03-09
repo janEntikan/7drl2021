@@ -3,15 +3,22 @@ from direct.interval.LerpInterval import LerpFunc
 from collections import defaultdict
 from panda3d.core import NodePath
 from direct.actor.Actor import Actor
+from mazegen import Maze
 from creature import Worm
 
 
-DIRS = [(0,1),(1, 0),(0, -1),(-1,0)]
-LOCS = [(4, 8),(8, 4),(4, 0),(0, 4)]
-
+DIRS = [(0,-1),(1, 0),(0, 1),(-1,0)]
+LOCS = [(4, 0),(8, 4),(4, 8),(0, 4)]
+OPPOSITE = {
+    "n":"s",
+    "e":"w",
+    "s":"n",
+    "w":"e",
+}
 
 class Tile():
     def __init__(self, room=None, pos=(0,0), char="#"):
+        self.made = False
         self.room = room
         self.pos = pos
         self.root = NodePath("tile")
@@ -64,10 +71,10 @@ class Door(Tile):
         f = base.map.tile_set["floor_0"].copy_to(self.root)
         doorway = base.map.tile_set["doorway"].copy_to(base.map.static)
         doorway.set_pos(self.pos[0],-self.pos[1],0)
-        if not self.direction%2: doorway.set_h(90)
+        doorway.set_h(90*(self.direction in "ns"))
         self.door = base.map.tile_set["door"].copy_to(base.map.dynamic)
         self.door.set_pos(self.pos[0],-self.pos[1],0)
-        if not self.direction%2: self.door.set_h(90)
+        self.door.set_h(90*(self.direction in "ns"))
         self.open_door(int(not self.open))
 
     def activate(self):
@@ -77,7 +84,11 @@ class Door(Tile):
             toData=0, duration=0.25,
         )
         base.sequence_player.add_to_sequence(lerp)
-        self.room.append(self.direction)
+        base.map.move(self.direction)
+        p = base.map.pos(8)
+        if not p in base.map.rooms:
+            base.map.rooms[p] = Room(*p)
+        base.map.move(OPPOSITE[self.direction])
 
     def open_door(self, value):
         chars = self.door.find_all_matches('**/+Character')
@@ -86,11 +97,10 @@ class Door(Tile):
 
 
 class Room():
-    def __init__(self, x, y, back_direction=None):
+    def __init__(self, x, y):
         self.x, self.y = x, y
         self.rect = [self.x,self.y,9,9]
         self.root = base.map.static.attach_new_node("room")
-        self.back_direction = back_direction
         self.construct()
 
     def construct(self):
@@ -99,18 +109,16 @@ class Room():
         self.finalize()
         base.map.enemies.append(Worm("fat",(self.x+4, -(self.y+4), 0)))
 
-    def make_door(self, d=0, open=False):
+    def make_door(self, direction="n", open=False):
+        print("making door", direction)
+        d = "nesw".index(direction)
         x = LOCS[d][0]+self.x
         y = LOCS[d][1]+self.y
-        base.map.tiles[x,y] = Door(self, [x,y], d, open=open)
+        base.map.tiles[x,y] = Door(self, [x,y], direction, open=open)
 
     def make_doors(self):
-        if not self.back_direction == None:
-            self.make_door(self.back_direction, open=True)
-            b = (self.back_direction+choice((-1,1,2)))%4
-            self.make_door(b)
-        else:
-            self.make_door(randint(0,3))
+        for door in base.map.new_doors:
+            self.make_door(door)
 
     def generate(self):
         for y in range(self.rect[3]-2):
@@ -124,26 +132,32 @@ class Room():
             for x in range(self.rect[2]):
                 t = base.map.tiles[self.x+x,self.y+y]
                 if not t.char == "#":
-                    t.get_surrounding_tiles()
-                    t.make_mesh()
-                    t.root.reparent_to(self.root)
+                    if not t.made:
+                        t.made = True
+                        t.get_surrounding_tiles()
+                        t.make_mesh()
+                        t.root.reparent_to(self.root)
         self.root.flatten_strong()
 
-    def append(self, direction):
-        dir = DIRS[direction]
-        x,y,w,h = self.rect
-        x += dir[0]*(w-1)
-        y += dir[1]*(h-1)
-        Room(x, y, (direction+2)%4)
 
-
-class Map():
+class Map(Maze):
     def __init__(self):
+        Maze.__init__(self, 32)
         self.tiles = defaultdict(Tile)
         self.static = render.attach_new_node("map-static")
         self.dynamic = render.attach_new_node("map-dynamic")
         self.enemies = []
+        self.rooms = {}
         self.load_tile_set()
+
+    def pos(self, size):
+        return self.current_room.x*8, self.current_room.y*8
+
+    def set(self, pos):
+        x, y, z = pos
+        x = int(x)//8
+        y = -int(y)//8
+        self._current_room = x, y
 
     def load_tile_set(self, name="medical"):
         self.tile_set = {}

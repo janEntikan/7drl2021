@@ -43,6 +43,7 @@ class LineEffects():
             self.bullet.detach_node()
 
     def draw_bullet(self, a, b):
+        a = a.get_pos(render)
         self.linesegs.move_to(a)
         self.linesegs.draw_to(b)
         lines = self.linesegs.create()
@@ -91,13 +92,15 @@ class Base(ShowBase):
         self.sequence_player = SequencePlayer()
         self.transition = Transitions(loader)
         self.interface = Interface()
-        self.bg_color = VBase4(0.01, 0.01, 0.01, 1)
+        self.bg_color = VBase4(0.1, 0.1, 0.1, 1)
 
         card, scene, camera, self.buffer = self.make_render_card()
         self.load_icons()
         self.map = Map()
-        self.player = Player((1,-1,0))
-        Room(0,0)
+        p = self.map.pos(8)
+        self.map.rooms[p] = Room(*p)
+
+        self.player = Player((p[0]+3,-p[1]-3,0))
 
         camera.reparent_to(self.player.root)
         camera.set_pos(10,-12,10)

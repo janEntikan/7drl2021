@@ -1,9 +1,9 @@
+from math import hypot
 from direct.interval.IntervalGlobal import LerpFunctionInterval, Func, Wait, Sequence
-
 from random import uniform
 from direct.actor.Actor import Actor
 from panda3d.core import Vec3
-from math import hypot
+from items import *
 
 
 def round_vec3(vec3):
@@ -47,6 +47,7 @@ class Interface(): # takes care of player logic and ai response
                     return
             player.animate("walk", False)
             player.move_to(new_pos)
+            base.map.set(new_pos)
             turn_over = True
         elif context["fire"]:
             turn_over = player.fire()
@@ -59,13 +60,6 @@ class Interface(): # takes care of player logic and ai response
         else:
             for enemy in base.map.enemies:
                 enemy.reset()
-
-class Weapon():
-    def __init__(self):
-        self.name = "spreadblaster"
-        self.damage = 10
-        self.two_handed = True
-        self.icon = base.icons["plasmarifle"]
 
 
 class Creature():
@@ -98,13 +92,11 @@ class Player(Creature):
         )
         self.inventory = []
         self.weapon = Weapon()
-        self.hold(self.weapon.icon)
+        self.weapon.hold(self)
         self.aim_select = 0
         self.aimed = None
         self.crosshair = base.icons["crosshair"]
         self.crosshair.set_scale(0.5)
-        self.muzzle = self.root.find("**/muzzle") 
-        self.muzzle.hide()
         self.color()
 
     def color(self):
@@ -112,12 +104,8 @@ class Player(Creature):
         chest.set_color((0,0.1,0.1,1))
         legs = self.root.find("**/legs")
         legs.set_color((0.02,0.02,0.02,1))
-        #arms = self.root.find("**/arms")
-        #arms.set_color((0.1,0.1,0.1,1))
-
-    def flash(self, on=True):
-        if on: self.muzzle.show()
-        else:  self.muzzle.hide()
+        arms = self.root.find("**/arms")
+        arms.set_color((0.1,0.1,0.1,1))
 
     def aim(self):
         for enemy in base.map.enemies:
@@ -139,50 +127,19 @@ class Player(Creature):
             self.animate("fire", False)
             self.crosshair.hide()
             base.sequence_player.wait = 1
-            flash_sequence = Sequence(
-                Wait(0.2),
-                Func(self.flash, True),
-                Func(
-                    base.linefx.draw_bullet, 
-                    self.muzzle.get_pos(render), 
-                    self.aimed.root.get_pos()
-                ),
-                Wait(0.15),
-                Func(
-                    base.linefx.remove_bullet,
-                ),
-                Func(self.flash, False),
-            )
-            base.sequence_player.add_to_sequence(flash_sequence)
+            self.weapon.activate(self,self.aimed)
             self.aimed.hurt()
         self.aimed = None
         return True
 
-    def set_twohand(self, string):
-        if self.weapon:
-            if self.weapon.two_handed:
-                string+="_twohanded"
-            else:
-                string+="_onehanded"
-        return string
-
     def animate(self, animation, loop=True):
-        n = self.set_twohand(animation)
-        if not self.root.getCurrentAnim() == n:
-            if loop:
-                self.root.loop(n)
-            else:
-                self.root.play(n)
-
-    def hold(self, item=None):
-        old_item = self.root.find("**/holding")
-        if old_item: old_item.remove_node()
-        if item:
-            hold_node = self.root.attach_new_node("holding")
-            i = item.copy_to(hold_node)
-            self.root.expose_joint(hold_node, "modelRoot", "hand.r")
-            i.set_hpr(0,90,-90)
-            i.set_scale(0.05)
+        if self.weapon:
+            n = self.weapon.is_twohand(animation)
+            if not self.root.getCurrentAnim() == n:
+                if loop:
+                    self.root.loop(n)
+                else:
+                    self.root.play(n)
 
 
 class Enemy(Creature):
