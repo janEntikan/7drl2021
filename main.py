@@ -139,7 +139,7 @@ class Base(ShowBase):
         return card, scene, camera
 
     def load_icons(self):
-        model = loader.load_model("assets/models/icons.blend")
+        model = loader.load_model("assets/models/icons.bam")
         self.icons = {}
         for child in model.get_children():
             child.clear_transform()
