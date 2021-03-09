@@ -62,10 +62,12 @@ class Door(Tile):
 
     def make_mesh(self):
         f = base.map.tile_set["floor_0"].copy_to(self.root)
-        doorway = base.map.tile_set["doorway"].copy_to(base.map.dynamic)
+        doorway = base.map.tile_set["doorway"].copy_to(base.map.static)
         doorway.set_pos(self.pos[0],-self.pos[1],0)
         if not self.direction%2: doorway.set_h(90)
-        self.door = base.map.tile_set["door"].copy_to(doorway)
+        self.door = base.map.tile_set["door"].copy_to(base.map.dynamic)
+        self.door.set_pos(self.pos[0],-self.pos[1],0)
+        if not self.direction%2: self.door.set_h(90)
         self.open_door(int(not self.open))
 
     def activate(self):
@@ -143,7 +145,7 @@ class Map():
         self.enemies = []
         self.load_tile_set()
 
-    def load_tile_set(self, name="engineering"):
+    def load_tile_set(self, name="medical"):
         self.tile_set = {}
         tile_set_root = loader.load_model("assets/models/decks/"+name+".bam")
         for child in tile_set_root.get_children():

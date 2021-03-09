@@ -5,6 +5,7 @@ from direct.actor.Actor import Actor
 from panda3d.core import Vec3
 from math import hypot
 
+
 def round_vec3(vec3):
     new = Vec3()
     for v, value in enumerate(vec3):
@@ -132,6 +133,7 @@ class Player(Creature):
             return
 
     def fire(self):
+        self.aim()
         if self.aimed:
             self.root.look_at(self.aimed.root)
             self.animate("fire", False)
@@ -214,7 +216,9 @@ class Enemy(Creature):
             return
         self.wait = not self.wait
         if not self.wait:
-            self.scan(base.player.root.get_pos())
+            seen = self.scan(base.player.root.get_pos())
+            if seen:
+                self.goto = seen
             if self.goto:
                 self.root.loop("move")
                 inc = towards(self.root.get_pos(),self.goto)
@@ -231,10 +235,10 @@ class Enemy(Creature):
             sx, sy = round(pos_s.x),round(pos_s.y)
             t = base.map.tiles[sx, -sy]
             if t.char == "#":
-                return
+                return None
             elif sx == px and sy == py:
-                self.goto = target_pos
-                return
+                return target_pos
+
 
 class Worm(Enemy):
     def __init__(self, type, pos):
