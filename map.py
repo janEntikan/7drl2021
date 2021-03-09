@@ -1,10 +1,9 @@
 from random import randint, uniform, choice
-from direct.interval.LerpInterval import LerpFunc
 from collections import defaultdict
-from panda3d.core import NodePath
 from direct.actor.Actor import Actor
 from mazegen import Maze
-from creature import Worm
+from tiles import *
+from creature import *
 
 
 DIRS = [(0,-1),(1, 0),(0, 1),(-1,0)]
@@ -16,91 +15,19 @@ OPPOSITE = {
     "w":"e",
 }
 
-class Tile():
-    def __init__(self, room=None, pos=(0,0), char="#"):
-        self.made = False
-        self.room = room
-        self.pos = pos
-        self.root = NodePath("tile")
-        self.root.set_pos(pos[0], -pos[1], 0)
-        self.char = char
-        self.surrounding = [
-            [None,None,None],
-            [None,self,None],
-            [None,None,None],
-        ]    
 
-    def get_surrounding_tiles(self):
-        for sy in range(3):
-            for sx in range(3):
-                x = self.pos[0]-1+sx
-                y = self.pos[1]-1+sy
-                self.surrounding[sy][sx] = base.map.tiles[x,y]
-
-    def make_mesh(self):
-        self.make_walls()
-
-    def make_walls(self):
-        f = base.map.tile_set["floor_0"].copy_to(self.root)
-        light = self.pos[0]%2 == 1 and self.pos[1]%2 == 1 
-        vent = self.pos[0]%4 == 1 and self.pos[1]%4 == 1 
-
-        for angle, offset in enumerate(((0,1), (1,0), (2,1), (1,2))):
-            if self.surrounding[offset[1]][offset[0]]:
-                neighbour = self.surrounding[offset[1]][offset[0]]
-                if neighbour.char == "#":
-                    wall_type = "wall_0"
-                    w = base.map.tile_set[wall_type].copy_to(self.root)
-                    heading = -angle*90 
-                    w.set_h(heading)
-                    if light:
-                        l = base.map.tile_set["light"].copy_to(self.root)
-                        l.set_h(heading)
-                    if not randint(0,16):
-                        l = base.map.tile_set["wall_prop_0"].copy_to(self.root)
-                        l.set_h(heading)                        
-
-
-class Door(Tile):
-    def __init__(self, room, pos, direction, open=False):
-        Tile.__init__(self, room, pos, char="=")
-        self.direction = direction
-        self.open = open
-
-    def make_mesh(self):
-        f = base.map.tile_set["floor_0"].copy_to(self.root)
-        doorway = base.map.tile_set["doorway"].copy_to(base.map.static)
-        doorway.set_pos(self.pos[0],-self.pos[1],0)
-        doorway.set_h(90*(self.direction in "ns"))
-        self.door = base.map.tile_set["door"].copy_to(base.map.dynamic)
-        self.door.set_pos(self.pos[0],-self.pos[1],0)
-        self.door.set_h(90*(self.direction in "ns"))
-        self.open_door(int(not self.open))
-
-    def activate(self):
-        self.open = True
-        lerp = LerpFunc(
-            self.open_door, fromData=1, 
-            toData=0, duration=0.25,
-        )
-        base.sequence_player.add_to_sequence(lerp)
-        base.map.move(self.direction)
-        p = base.map.pos(8)
-        if not p in base.map.rooms:
-            base.map.rooms[p] = Room(*p)
-        base.map.move(OPPOSITE[self.direction])
-
-    def open_door(self, value):
-        chars = self.door.find_all_matches('**/+Character')
-        for char in chars:
-            char.node().get_bundle(0).freeze_joint("closed", value)
-
+class Props():
+    def __init__(self):
+        self.floor = randint(0,3)
+        self.wall = 0
 
 class Room():
     def __init__(self, x, y):
         self.x, self.y = x, y
         self.rect = [self.x,self.y,9,9]
+        self.props = Props()
         self.root = base.map.static.attach_new_node("room")
+        self.unlit = base.map.unlit.attach_new_node("room")
         self.construct()
 
     def construct(self):
@@ -109,23 +36,51 @@ class Room():
         self.finalize()
         base.map.enemies.append(Worm("fat",(self.x+4, -(self.y+4), 0)))
 
-    def make_door(self, direction="n", open=False):
-        print("making door", direction)
+    def make_door(self, direction="n"):
         d = "nesw".index(direction)
         x = LOCS[d][0]+self.x
         y = LOCS[d][1]+self.y
-        base.map.tiles[x,y] = Door(self, [x,y], direction, open=open)
+        base.map.tiles[x,y] = Door(self.props, [x,y], direction)
 
     def make_doors(self):
         for door in base.map.new_doors:
             self.make_door(door)
 
+    def connect_doors(self):
+        for door in base.map.doors:
+            d = "nesw".index(door)
+            x = LOCS[d][0]+self.x
+            y = LOCS[d][1]+self.y
+            w = int(self.rect[2]/2)+self.rect[0]
+            h = int(self.rect[3]/2)+self.rect[1]
+            self.draw_line(x,y,w,h," ")
+
+    def draw(self, x, y, char):
+        base.map.tiles[x,y] = Tile(self.props, [x, y], char)
+
+    def draw_line(self, x1, y1, x2, y2, char):
+        self.draw(x1, y1, char)
+        while True:
+            if   x1 < x2: x1 += 1
+            elif x1 > x2: x1 -= 1
+            elif y1 < y2: y1 += 1
+            elif y1 > y2: y1 -= 1
+            else: return
+            self.draw(x1, y1, char)
+
+    def draw_square(self, rect):
+        for y in range(rect[3]):
+            for x in range(rect[2]):
+                self.draw(rect[0]+x, rect[1]+y, " ")
+               
     def generate(self):
-        for y in range(self.rect[3]-2):
-            for x in range(self.rect[2]-2):
-                if randint(0,9):
-                    tx, ty = self.x+x+1,self.y+y+1
-                    base.map.tiles[tx,ty] = Tile(self, [tx, ty], " ")
+        self.connect_doors()
+        x, y, w, h = self.rect
+        w = randint(1,self.rect[2]-2)
+        h = randint(1,self.rect[3]-2)
+        x += (self.rect[2]//2)-(w//2)
+        y += (self.rect[3]//2)-(h//2)
+        self.draw_square((x,y,w,h))
 
     def finalize(self):
         for y in range(self.rect[3]):
@@ -137,7 +92,9 @@ class Room():
                         t.get_surrounding_tiles()
                         t.make_mesh()
                         t.root.reparent_to(self.root)
+                        t.unlit.reparent_to(self.unlit)
         self.root.flatten_strong()
+        self.unlit.flatten_strong()
 
 
 class Map(Maze):
@@ -145,6 +102,7 @@ class Map(Maze):
         Maze.__init__(self, 32)
         self.tiles = defaultdict(Tile)
         self.static = render.attach_new_node("map-static")
+        self.unlit = render.attach_new_node("map-unlit")
         self.dynamic = render.attach_new_node("map-dynamic")
         self.enemies = []
         self.rooms = {}
@@ -167,3 +125,10 @@ class Map(Maze):
             child.detach_node()
             child.clear_transform()
         self.tile_set["door"] = Actor("assets/models/decks/doors.bam")
+
+    def build(self, direction):
+        self.move(direction)
+        p = self.pos(8)
+        if not p in self.rooms:
+            self.rooms[p] = Room(*p)
+        self.move(OPPOSITE[direction])

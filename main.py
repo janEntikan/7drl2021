@@ -92,18 +92,17 @@ class Base(ShowBase):
         self.sequence_player = SequencePlayer()
         self.transition = Transitions(loader)
         self.interface = Interface()
-        self.bg_color = VBase4(0.1, 0.1, 0.1, 1)
+        self.bg_color = VBase4(0, 0, 0, 1)
 
         card, scene, camera, self.buffer = self.make_render_card()
         self.load_icons()
         self.map = Map()
         p = self.map.pos(8)
         self.map.rooms[p] = Room(*p)
-
-        self.player = Player((p[0]+3,-p[1]-3,0))
+        self.player = Player((p[0]+4,-p[1]-4,0))
 
         camera.reparent_to(self.player.root)
-        camera.set_pos(10,-12,10)
+        camera.set_pos(4,-4,8)
         camera.look_at(self.player.root)
         camera.set_compass()
         self.innitialize_fov()
@@ -129,13 +128,7 @@ class Base(ShowBase):
             self.fov_point.get_lens(i).set_near_far(0.2, 10)
         self.fov_point_np = self.player.root.attach_new_node(self.fov_point)
         self.fov_point_np.set_z(0.5)
-
-        self.fov_ambient = AmbientLight("fov ambient")
-        self.fov_ambient_np = self.player.root.attach_new_node(self.fov_ambient)
-
-        self.fov_ambient.set_color(self.bg_color)
         self.fov_point.set_color(VBase4(1,1,1,1)-self.bg_color)
-        target_np.set_light(self.fov_ambient_np)       
         target_np.set_light(self.fov_point_np)
 
 
@@ -151,7 +144,7 @@ class Base(ShowBase):
         camera = base.make_camera(buffer)
         lens = OrthographicLens()
         lens.set_film_size(ortho_size[0], ortho_size[1])
-        lens.set_near(10)
+        lens.set_near(5)
         lens.set_far(40)
         camera.node().set_lens(lens)
         camera.reparent_to(scene)
