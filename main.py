@@ -10,6 +10,7 @@ from panda3d.core import Filename
 from panda3d.core import CardMaker
 from panda3d.core import LineSegs
 from panda3d.core import NodePath
+from panda3d.core import PointLight
 from panda3d.core import VBase4
 from panda3d.core import OrthographicLens
 from panda3d.core import FrameBufferProperties
@@ -20,7 +21,6 @@ from panda3d.core import SamplerState
 from keybindings.device_listener import add_device_listener
 from keybindings.device_listener import SinglePlayerAssigner
 
-from stars import create_star_sphere_geom_node
 from map import Map, Room
 from creature import Interface, Player
 
@@ -47,7 +47,6 @@ class LineEffects():
         impact = base.icons["impact"]
         impact = impact.copy_to(self.bullet)
         impact.set_pos(b)
-
 
 
 class SequencePlayer():
@@ -99,16 +98,23 @@ class Base(ShowBase):
         camera.set_pos(10,-12,10)
         camera.look_at(self.player.root)
         camera.setCompass()
-        stars = create_star_sphere_geom_node(60, 1000)
-        self.stars = camera.attach_new_node(stars)
-        self.stars.set_scale(30)
-        def rotate_sky(task):
-            self.stars.set_r(
-                self.stars,
-                globalClock.dt * 360 / 6000,
-            )
-            return task.cont
-        base.task_mgr.add(rotate_sky)
+        # FOV
+        render.setShaderAuto()
+        self.l = PointLight("caster")
+        self.l.set_color((1,1,1,1))
+        self.l.setScene(self.map.static)
+        self.l.set_max_distance(1)
+        self.l.set_specular_color((0,0,0,0))
+        self.l.setShadowCaster(True)
+        self.l.showFrustum()
+        self.l.set_attenuation((0,1,0))
+        for i in range(6):
+            self.l.getLens().setNearFar(0.2, 10)
+        self.l_np = render.attach_new_node(self.l)
+        self.l_np.reparent_to(self.player.root)
+        self.l_np.set_z(1)
+        self.map.static.set_light(self.l_np)
+
         base.task_mgr.add(self.update)
 
     def make_render_card(self, ortho_size=[8,5], resolution=[256,256]):

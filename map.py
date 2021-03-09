@@ -87,7 +87,7 @@ class Room():
     def __init__(self, x, y, back_direction=None):
         self.x, self.y = x, y
         self.rect = [self.x,self.y,9,9]
-        self.root = render.attach_new_node("room")
+        self.root = base.map.static.attach_new_node("room")
         self.back_direction = back_direction
         self.construct()
 
@@ -113,8 +113,9 @@ class Room():
     def generate(self):
         for y in range(self.rect[3]-2):
             for x in range(self.rect[2]-2):
-                tx, ty = self.x+x+1,self.y+y+1
-                base.map.tiles[tx,ty] = Tile(self, [tx, ty], " ")
+                if randint(0,9):
+                    tx, ty = self.x+x+1,self.y+y+1
+                    base.map.tiles[tx,ty] = Tile(self, [tx, ty], " ")
 
     def finalize(self):
         for y in range(self.rect[3]):
