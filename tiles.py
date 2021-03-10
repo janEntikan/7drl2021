@@ -10,6 +10,7 @@ class Tile():
         self.pos = pos
         self.root = NodePath("tile")
         self.unlit = NodePath("tile_unlit")
+        self.backsides = NodePath("tile_backsides")
         self.root.set_pos(pos[0], -pos[1], 0)
         self.unlit.set_pos(pos[0], -pos[1], 0)
 
@@ -32,10 +33,10 @@ class Tile():
         self.make_walls()
 
     def make_walls(self):
+
         f = base.map.tile_set["floor_"+str(self.props.floor)].copy_to(self.root)
         light = self.pos[0]%2 == 1 and self.pos[1]%2 == 1
         vent = self.pos[0]%4 == 1 and self.pos[1]%4 == 1 
-
         for angle, offset in enumerate(((0,1), (1,0), (2,1), (1,2))):
             if self.surrounding[offset[1]][offset[0]]:
                 neighbour = self.surrounding[offset[1]][offset[0]]
@@ -60,9 +61,7 @@ class Door(Tile):
         self.open = False
 
     def make_mesh(self):
-        f = base.map.tile_set["floor_0"].copy_to(self.root)
-        doorway = base.map.tile_set["doorway"].copy_to(base.map.static)
-        doorway.set_pos(self.pos[0],-self.pos[1],0)
+        doorway = base.map.tile_set["doorway"].copy_to(self.root)
         doorway.set_h(90*(self.direction in "ns"))
         self.door = base.map.tile_set["door"].copy_to(base.map.dynamic)
         self.door.set_pos(self.pos[0],-self.pos[1],0)

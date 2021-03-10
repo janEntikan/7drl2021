@@ -73,6 +73,8 @@ class SequencePlayer():
             self.parallel.append(item)
 
     def finalize(self):
+        if not self.parallel:
+            self.parallel = Parallel()
         func = Sequence(Wait(self.wait), Func(self.end))
         self.parallel.append(func)
         self.parallel.start()
@@ -112,28 +114,24 @@ class Base(ShowBase):
 
     def innitialize_fov(self):
         render.set_shader_auto()
-        target_np = self.map.static
-        target_np.set_attrib(LightRampAttrib.make_single_threshold(0.0, 1.0))
         self.fov_point = PointLight("caster")
         self.fov_point.set_shadow_caster(True, 256, 256, -1000)
         self.fov_point.set_camera_mask(0b001)
         self.player.root.hide(0b001)
-        self.fov_point.set_scene(target_np)
-        self.fov_point.set_initial_state(
-            self.fov_point.get_initial_state().add_attrib(
-                DepthOffsetAttrib.make(-6)
-            )
-        )
         self.fov_point.set_lens_active(4, False)
         self.fov_point.set_lens_active(5, False)
         for i in range(6):
-            self.fov_point.get_lens(i).set_near_far(0.2, 10)
+            self.fov_point.get_lens(i).set_near_far(0.1, 40)
         self.fov_point_np = self.player.root.attach_new_node(self.fov_point)
         self.fov_point_np.set_z(0.5)
-        self.fov_point.set_color(VBase4(1,1,1,1)-self.bg_color)
-        target_np.set_light(self.fov_point_np)
-
-
+        self.fov_point.set_color(VBase4(1,1,1,1))
+        self.fov_point.set_scene(self.map.root)
+        for target_np in [self.map.static, self.map.backsides]:
+            target_np.set_attrib(
+                LightRampAttrib.make_single_threshold(0.0, 1.0)
+            )
+            target_np.set_light(self.fov_point_np)
+ 
     def make_render_card(self, ortho_size=[8,5], resolution=[256,256]):
         scene = NodePath("Scene")
         buffer = base.win.make_texture_buffer("Buffer", resolution[0], resolution[1])

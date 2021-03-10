@@ -29,6 +29,7 @@ class Room():
         self.props = Props()
         self.root = base.map.static.attach_new_node("room")
         self.unlit = base.map.unlit.attach_new_node("room")
+        self.backsides = base.map.backsides.attach_new_node("room")
         self.construct()
 
     def construct(self):
@@ -36,7 +37,6 @@ class Room():
         self.make_doors()
         self.set_neighbors()
         self.finalize()
-        base.map.enemies.append(Worm("fat",(self.x+4, -(self.y+4), 0)))
 
     def set_neighbors(self):
         dirs = [[0,-1], [1,0], [0,1], [-1,0]]
@@ -78,7 +78,7 @@ class Room():
         base.map.tiles[x,y] = Tile(self.props, [x, y], char)
 
     def draw_line(self, x1, y1, x2, y2, char):
-        self.draw(x1, y1, char)
+        #self.draw(x1, y1, char)
         while True:
             if   x1 < x2: x1 += 1
             elif x1 > x2: x1 -= 1
@@ -87,11 +87,17 @@ class Room():
             else: return
             self.draw(x1, y1, char)
 
-    def draw_square(self, rect):
+    def draw_square(self, rect, chance=9):
         for y in range(rect[3]):
             for x in range(rect[2]):
-                self.draw(rect[0]+x, rect[1]+y, " ")
-               
+                if randint(0,chance):
+                    rx, ry = rect[0]+x, rect[1]+y
+                    self.draw(rx, ry, " ")
+                    if not randint(0,9):
+                        w = Worm("fat",(rx, -ry, 0))
+                        w.root.hide()
+                        base.map.enemies.append(w)
+
     def generate(self):
         self.connect_doors()
         x, y, w, h = self.rect
@@ -112,16 +118,21 @@ class Room():
                         t.make_mesh()
                         t.root.reparent_to(self.root)
                         t.unlit.reparent_to(self.unlit)
+                        for side in t.root.find_all_matches("**/*_backside"):
+                            side.wrt_reparent_to(self.backsides)
         self.root.flatten_strong()
         self.unlit.flatten_strong()
-
+        self.backsides.flatten_strong()
+        self.backsides.hide(0b001)
 
 class Map(Maze):
     def __init__(self):
         Maze.__init__(self, 32)
         self.tiles = defaultdict(Tile)
-        self.static = render.attach_new_node("map-static")
+        self.root = render.attach_new_node("map_root")
+        self.static = self.root.attach_new_node("map-static")
         self.unlit = render.attach_new_node("map-unlit")
+        self.backsides = self.root.attach_new_node("map-backsides")
         self.dynamic = render.attach_new_node("map-dynamic")
         self.enemies = []
         self.rooms = {}
@@ -152,15 +163,16 @@ class Map(Maze):
             self.rooms[p] = Room(*p)
         self.move(OPPOSITE[direction])
 
-    def scan(self, pos, vector):
+    def scan(self, start, end, vector):
         vector.normalize()
         while True:
-            pos += vector
-            x,y,z = pos
-            t = base.map.tiles[round(x),round(-y)]
+            start -= vector
+            x,y,z = start
+            x,y = round(x), round(y)
+            t = base.map.tiles[x,-y]
             if t.char == "#":
                 return False
-            else:
+            elif x == round(end.x) and y == round(end.y):
                 return True
 
     def flow_field(self, start_tile, target_tile):
