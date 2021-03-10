@@ -6,24 +6,6 @@ from panda3d.core import Vec3
 from items import *
 
 
-def round_vec3(vec3):
-    new = Vec3()
-    for v, value in enumerate(vec3):
-        new[v] = round(value)
-    return new
-
-def towards(a, b):
-    try:
-        sx, sy, sz = a
-        fx, fy, fz = b
-        dx, dy = sx - fx, sy - fy
-        dist = hypot(dx, dy)
-        dx, dy = dx/dist, dy/dist
-    except ZeroDivisionError:
-        dx, dy = 0,0
-    return Vec3(dx, dy, 0)
-
-
 class Interface(): # takes care of player logic and ai response
     def update(self):
         player = base.player
@@ -70,7 +52,7 @@ class Creature():
         self.root.setLODAnimation(2, 1, 0.0075)
         self.root.loop("idle")
         self.root.reparent_to(render)
-
+        
     def stop(self):
         if not self.root.getCurrentAnim() == "idle":
             self.root.loop("idle")
@@ -148,11 +130,11 @@ class Enemy(Creature):
         self.goto = None
         self.wait = True
         self.alive = True
-        self.hp = 3
+        self.hp = 1
 
     def hurt(self):
         self.hp -= 1
-        self.wait = False
+        self.wait = True
         if self.hp > 0:
             self.root.play("hurt")
         else:
@@ -171,30 +153,17 @@ class Enemy(Creature):
             base.map.enemies.remove(self)
             base.task_mgr.doMethodLater(3, self.detach, "ok")
             return
-        self.wait = not self.wait
         if not self.wait:
-            seen = self.scan(base.player.root.get_pos())
-            if seen:
-                self.goto = seen
-            if self.goto:
-                self.root.loop("move")
-                inc = towards(self.root.get_pos(),self.goto)
-                inc = round_vec3(inc)
-                self.move_to(self.root.get_pos()-inc)
-
-    def scan(self, target_pos):
-        pos_s = self.root.get_pos()
-        pos_p = target_pos
-        inc = towards(pos_s, pos_p)
-        while True:
-            pos_s -= inc
-            px, py = round(pos_p.x),round(pos_p.y)
-            sx, sy = round(pos_s.x),round(pos_s.y)
-            t = base.map.tiles[sx, -sy]
-            if t.char == "#":
-                return None
-            elif sx == px and sy == py:
-                return target_pos
+            self.root.loop("move")
+            x,y,z = self.root.get_pos()
+            a = base.map.tiles[int(x),int(-y)]
+            x,y,z = base.player.root.get_pos()
+            b = base.map.tiles[int(x),int(-y)]
+            self.next_tile = base.map.flow_field(a,b)
+            x,y = self.next_tile.pos
+            self.move_to((x,-y,0))
+        else:
+            self.wait = False
 
 
 class Worm(Enemy):

@@ -16,6 +16,7 @@ OPPOSITE = {
 }
 
 
+
 class Props():
     def __init__(self):
         self.floor = randint(0,3)
@@ -33,8 +34,26 @@ class Room():
     def construct(self):
         self.generate()
         self.make_doors()
+        self.set_neighbors()
         self.finalize()
         base.map.enemies.append(Worm("fat",(self.x+4, -(self.y+4), 0)))
+
+    def set_neighbors(self):
+        dirs = [[0,-1], [1,0], [0,1], [-1,0]]
+        solids = "#"
+        for y in range(self.rect[3]+2):
+            for x in range(self.rect[2]+2):
+                sx = x-1+self.rect[0]
+                sy = y-1+self.rect[1]
+                tile = base.map.tiles[sx,sy]
+                tile.neighbors = []
+                for dir in dirs:
+                    try:
+                        n = base.map.tiles[sx+dir[0],sy+dir[1]]
+                        if not n.char in solids:
+                            tile.neighbors.append(n)
+                    except IndexError:
+                        pass
 
     def make_door(self, direction="n"):
         d = "nesw".index(direction)
@@ -132,3 +151,58 @@ class Map(Maze):
         if not p in self.rooms:
             self.rooms[p] = Room(*p)
         self.move(OPPOSITE[direction])
+
+    def scan(self, start_pos, end_pos):
+        def towards(a, b):
+            try:
+                sx, sy, sz = a
+                fx, fy, fz = b
+                dx, dy = sx - fx, sy - fy
+                dist = hypot(dx, dy)
+                dx, dy = dx/dist, dy/dist
+            except ZeroDivisionError:
+                dx, dy = 0,0
+            return Vec3(dx, dy, 0)
+        pos_s = start_pos
+        pos_p = end_pos
+        inc = towards(pos_s, pos_p)
+        while True:
+            pos_s -= inc
+            px, py = int(pos_p.x),int(pos_p.y)
+            sx, sy = int(pos_s.x),int(pos_s.y)
+            t = base.map.tiles[sx, -sy]
+            print(t)
+            if t.char == "#":
+                return None
+            elif sx == px and sy == py:
+                return target_pos
+
+    def flow_field(self, start_tile, target_tile):
+        marks = {target_tile: 0}
+        last_step_marked = [target_tile]
+        current_mark = 0
+        number_tries = 0
+        while start_tile not in marks:
+            current_mark += 1
+            newly_marked_tiles = []
+            new_neighbors = set()
+            for tile in last_step_marked:
+                for new_neighbor in tile.neighbors:
+                    new_neighbors.add(new_neighbor)
+            for new_neighbor in new_neighbors:
+                marks[new_neighbor] = current_mark
+                newly_marked_tiles.append(new_neighbor)
+            last_step_marked = newly_marked_tiles
+            number_tries += 1
+            if number_tries > 32:
+                break
+        lower = start_tile
+        for neighbor in start_tile.neighbors:
+            try:
+                if marks[neighbor] == marks[lower]:
+                    lower = neighbor
+                elif marks[neighbor] < marks[lower]:
+                    lower = neighbor
+            except:
+                pass
+        return lower

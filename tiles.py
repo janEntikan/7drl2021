@@ -19,13 +19,14 @@ class Tile():
             [None,self,None],
             [None,None,None],
         ]    
+        self.neighbors = []
 
     def get_surrounding_tiles(self):
         for sy in range(3):
             for sx in range(3):
                 x = self.pos[0]-1+sx
                 y = self.pos[1]-1+sy
-                self.surrounding[sy][sx] = base.map.tiles[x,y]
+                tile = self.surrounding[sy][sx] = base.map.tiles[x,y]
 
     def make_mesh(self):
         self.make_walls()

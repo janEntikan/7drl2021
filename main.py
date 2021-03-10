@@ -119,7 +119,7 @@ class Base(ShowBase):
         self.fov_point.set_scene(target_np)
         self.fov_point.set_initial_state(
             self.fov_point.get_initial_state().add_attrib(
-                DepthOffsetAttrib.make(-2)
+                DepthOffsetAttrib.make(-6)
             )
         )
         self.fov_point.set_lens_active(4, False)
