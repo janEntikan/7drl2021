@@ -33,7 +33,6 @@ class Tile():
         self.make_walls()
 
     def make_walls(self):
-
         f = base.map.tile_set["floor_"+str(self.props.floor)].copy_to(self.root)
         light = self.pos[0]%2 == 1 and self.pos[1]%2 == 1
         vent = self.pos[0]%4 == 1 and self.pos[1]%4 == 1 

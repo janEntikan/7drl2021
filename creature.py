@@ -48,10 +48,10 @@ class Interface(): # takes care of player logic and ai response
             for enemy in base.map.enemies:
                 enemy.update()
             base.sequence_player.finalize()
+            player.aim()
         else:
             for enemy in base.map.enemies:
                 enemy.reset()
-        player.aim()
 
 
 class Creature():
@@ -100,8 +100,12 @@ class Player(Creature):
         chest.set_color((0,0.1,0.1,1))
         legs = self.root.find("**/legs")
         legs.set_color((0.02,0.02,0.02,1))
-        arms = self.root.find("**/arms")
-        arms.set_color((0.1,0.1,0.1,1))
+        #arms = self.root.find("**/arms")
+        #arms.set_color((0.1,0.1,0.1,1))
+
+    def hurt_hand(self):
+        base.hudgun.find("**/hand_healthy").hide()
+        base.hudgun.find("**/hand_hurt").show()
 
     def hurt(self, amt, attacker, delay):
         self.hp -= amt
@@ -111,6 +115,7 @@ class Player(Creature):
                     Wait(0.2+delay),
                     Func(self.root.play, "hurt"),
                     Func(self.root.look_at, attacker.root),
+                    Func(self.hurt_hand),
                 )
             )
         else:
@@ -135,8 +140,12 @@ class Player(Creature):
                 if base.map.scan(p1, p2, vector):
                     visable.append(enemy)
                     enemy.root.show()
+                    enemy.last_seen = self.root.get_pos()
                 else:
                     enemy.root.hide()
+            else:
+                base.map.enemies.remove(enemies)
+                enemy.detach()
         base.map.enemies.sort(key=lambda x: x.distance, reverse=False)
         try:
             self.aimed = visable[self.aim_select]
@@ -151,6 +160,7 @@ class Player(Creature):
         if self.weapon.clip[0]<self.weapon.clip[1]:
             self.weapon.clip[0] += 1
             self.animate("reload", False)
+            base.hudgun.play("reload")
             base.sequence_player.hold(1)
             return True
         else:
@@ -162,6 +172,7 @@ class Player(Creature):
                 self.weapon.clip[0] -= 1
                 self.root.look_at(self.aimed.root)
                 self.animate("fire", False)
+                base.hudgun.play("fire")
                 base.sequence_player.wait = 1
                 self.weapon.activate(self,self.aimed)
                 self.aimed.hurt()
@@ -184,7 +195,7 @@ class Player(Creature):
 class Enemy(Creature):
     def __init__(self, name, model, pos):
         Creature.__init__(self, name, model, pos)
-        self.goto = None
+        self.last_seen = None
         self.wait = True
 
     def hurt(self):
@@ -220,19 +231,23 @@ class Enemy(Creature):
             base.map.enemies.remove(self)
             base.task_mgr.doMethodLater(3, self.detach, "ok")
             return
-        if not self.wait:
+        if not self.wait and self.last_seen:
+            print(self.last_seen, base.player.root.get_pos())
             if randint(0,1):
                 self.wait = True
             self.root.loop("move")
             x,y,z = self.root.get_pos()
             a = base.map.tiles[round(x),round(-y)]
-            x,y,z = base.player.root.get_pos()
+            x,y,z = self.last_seen
             b = base.map.tiles[int(x),int(-y)]
             self.next_tile = base.map.flow_field(a,b)
             x,y = self.next_tile.pos
-            px,py,pz = base.player.root.get_pos()
+            px,py,pz = self.last_seen
             if px == x and -py == y:
-                self.attack()
+                if self.last_seen == base.player.root.get_pos():
+                    self.attack()
+                else:
+                    self.last_seen = None
             else:
                 o = 0.2
                 x += uniform(-o,o)

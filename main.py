@@ -4,7 +4,7 @@ from direct.interval.IntervalGlobal import Sequence
 from direct.interval.IntervalGlobal import Parallel 
 from direct.interval.IntervalGlobal import Func 
 from direct.interval.IntervalGlobal import Wait
-
+from direct.actor.Actor import Actor
 from panda3d.core import load_prc_file
 from panda3d.core import Filename
 from panda3d.core import CardMaker
@@ -99,6 +99,7 @@ class Base(ShowBase):
         self.bg_color = VBase4(0, 0, 0, 1)
 
         card, scene, camera, self.buffer = self.make_render_card()
+        self.camera = camera
         self.load_icons()
         self.map = Map()
         p = self.map.pos(8)
@@ -111,6 +112,19 @@ class Base(ShowBase):
         camera.set_compass()
         self.innitialize_fov()
         base.task_mgr.add(self.update)
+
+        card, scene, camera, buffer = self.make_render_card([3,7],[64,256],(0,100))
+        self.hudgun = Actor("assets/models/hand.bam")
+        self.hudgun.reparent_to(scene)
+        self.hudgun.find("**/hand_healthy").show()
+        self.hudgun.find("**/hand_hurt").hide()
+        self.hudgun.setLODAnimation(1, 0.1, 0.0075)
+
+        camera.look_at(self.hudgun)
+        camera.set_pos(0.5,-1.5,10)
+        camera.set_p(-90)
+        card.set_scale(1/4,1,1)
+        card.set_x(1-(1/4))
 
     def innitialize_fov(self):
         render.set_shader_auto()
@@ -132,7 +146,7 @@ class Base(ShowBase):
             )
             target_np.set_light(self.fov_point_np)
  
-    def make_render_card(self, ortho_size=[8,5], resolution=[256,256]):
+    def make_render_card(self, ortho_size=[8,5], resolution=[256,256], nearfar=(5,40)):
         scene = NodePath("Scene")
         buffer = base.win.make_texture_buffer("Buffer", resolution[0], resolution[1])
         texture = buffer.get_texture()
@@ -144,8 +158,8 @@ class Base(ShowBase):
         camera = base.make_camera(buffer)
         lens = OrthographicLens()
         lens.set_film_size(ortho_size[0], ortho_size[1])
-        lens.set_near(5)
-        lens.set_far(40)
+        lens.set_near(nearfar[0])
+        lens.set_far(nearfar[1])
         camera.node().set_lens(lens)
         camera.reparent_to(scene)
         card = render2d.attach_new_node(self.cardmaker.generate())
