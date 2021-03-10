@@ -10,10 +10,17 @@ class Item():
         pass
 
 
+class Syringe(Item):
+    def __init__(self):
+        Item.__init__(self)
+        self.description = choice("")
+
+
 class Weapon():
     def __init__(self):
         self.name = "plasmarifle"
-        self.damage = 10
+        self.damage = 1
+        self.clip = [2,2]
         self.two_handed = True
         self.icon = base.icons["plasmarifle"]
         self.muzzle = self.icon.find("**/muzzle*")

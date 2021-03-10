@@ -8,24 +8,11 @@
   [ew.fire]
   _type = "button"
   _device_order = ["gamepad", "keyboard"]
-  gamepad = "face_x"
+  gamepad = "face_y"
   keyboard = "space"
 
-  [ew.select]
-  _type = "trigger"
+  [ew.reload]
+  _type = "button"
   _device_order = ["gamepad", "keyboard"]
   gamepad = "face_x"
-  keyboard = "enter"
-
-  [ew.inventory]
-  _type = "trigger"
-  _device_order = ["gamepad", "keyboard"]
-  gamepad = "face_y"
-  keyboard = "i"
-
-  [ew.menu]
-  _type = "trigger"
-  _device_order = ["gamepad", "keyboard"]
-  gamepad = "face_b"
-  keyboard = "escape"
-
+  keyboard = "r"

@@ -33,10 +33,12 @@ class Interface(): # takes care of player logic and ai response
             turn_over = True
         elif context["fire"]:
             turn_over = player.fire()
+        elif context["reload"]:
+            turn_over = player.reload()
         else:
             player.aim()
             player.stop()
-        if turn_over:
+        if turn_over:            
             for enemy in base.map.enemies:
                 enemy.update()
         else:
@@ -49,7 +51,7 @@ class Creature():
         self.name = name
         self.root = model
         self.root.set_pos(pos)
-        self.root.setLODAnimation(2, 1, 0.0075)
+        self.root.setLODAnimation(1, 0.1, 0.0075)
         self.root.loop("idle")
         self.root.reparent_to(render)
         
@@ -90,7 +92,14 @@ class Player(Creature):
         arms.set_color((0.1,0.1,0.1,1))
 
     def aim(self):
+        visable = []
         for enemy in base.map.enemies:
+            if base.map.scan(self.root.get_pos(), enemy.root.get_pos()):
+                visable.append(enemy)
+                enemy.root.show()
+            else:
+                enemy.root.hide()
+        for enemy in visable:
             vector = self.root.getPos() - enemy.root.getPos()
             enemy.distance = vector.get_xy().length()
         base.map.enemies.sort(key=lambda x: x.distance, reverse=False)
@@ -102,15 +111,30 @@ class Player(Creature):
         except:
             return
 
+    def reload(self):
+        if self.weapon.clip[0]<self.weapon.clip[1]:
+            self.weapon.clip[0] += 1
+            self.animate("reload", False)
+            self.crosshair.hide()        
+            base.sequence_player.wait = 5
+            base.sequence_player.hold(1)
+            return True
+        else:
+            return False
+
     def fire(self):
         self.aim()
         if self.aimed:
-            self.root.look_at(self.aimed.root)
-            self.animate("fire", False)
-            self.crosshair.hide()
-            base.sequence_player.wait = 1
-            self.weapon.activate(self,self.aimed)
-            self.aimed.hurt()
+            if self.weapon.clip[0] > 0:
+                self.weapon.clip[0] -= 1
+                self.root.look_at(self.aimed.root)
+                self.animate("fire", False)
+                self.crosshair.hide()
+                base.sequence_player.wait = 1
+                self.weapon.activate(self,self.aimed)
+                self.aimed.hurt()
+            else:
+                return False
         self.aimed = None
         return True
 
@@ -148,12 +172,18 @@ class Enemy(Creature):
     def detach(self, task):
         self.root.detach_node()
 
+    def attack(self):
+        self.root.look_at(base.player.root)        
+        self.root.play("attack")
+        base.sequence_player.hold(1.5)
+
     def update(self):
         if not self.alive:
             base.map.enemies.remove(self)
             base.task_mgr.doMethodLater(3, self.detach, "ok")
             return
         if not self.wait:
+            self.wait = True
             self.root.loop("move")
             x,y,z = self.root.get_pos()
             a = base.map.tiles[int(x),int(-y)]
@@ -161,7 +191,11 @@ class Enemy(Creature):
             b = base.map.tiles[int(x),int(-y)]
             self.next_tile = base.map.flow_field(a,b)
             x,y = self.next_tile.pos
-            self.move_to((x,-y,0))
+            px,py,pz = base.player.root.get_pos()
+            if px == x and -py == y:
+                self.attack()
+            else:
+                self.move_to((x,-y,0))
         else:
             self.wait = False
 

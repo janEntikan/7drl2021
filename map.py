@@ -154,11 +154,11 @@ class Map(Maze):
 
     def scan(self, start_pos, end_pos):
         def towards(a, b):
+            sx, sy, sz = a
+            fx, fy, fz = b
+            dx, dy = sx - fx, sy - fy
+            dist = hypot(dx, dy)
             try:
-                sx, sy, sz = a
-                fx, fy, fz = b
-                dx, dy = sx - fx, sy - fy
-                dist = hypot(dx, dy)
                 dx, dy = dx/dist, dy/dist
             except ZeroDivisionError:
                 dx, dy = 0,0
@@ -171,11 +171,10 @@ class Map(Maze):
             px, py = int(pos_p.x),int(pos_p.y)
             sx, sy = int(pos_s.x),int(pos_s.y)
             t = base.map.tiles[sx, -sy]
-            print(t)
             if t.char == "#":
                 return None
             elif sx == px and sy == py:
-                return target_pos
+                return end_pos
 
     def flow_field(self, start_tile, target_tile):
         marks = {target_tile: 0}
