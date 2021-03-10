@@ -71,6 +71,8 @@ class SequencePlayer():
             self.parallel = Parallel()
         for item in kwargs:
             self.parallel.append(item)
+
+    def finalize(self):
         func = Sequence(Wait(self.wait), Func(self.end))
         self.parallel.append(func)
         self.parallel.start()

@@ -152,29 +152,16 @@ class Map(Maze):
             self.rooms[p] = Room(*p)
         self.move(OPPOSITE[direction])
 
-    def scan(self, start_pos, end_pos):
-        def towards(a, b):
-            sx, sy, sz = a
-            fx, fy, fz = b
-            dx, dy = sx - fx, sy - fy
-            dist = hypot(dx, dy)
-            try:
-                dx, dy = dx/dist, dy/dist
-            except ZeroDivisionError:
-                dx, dy = 0,0
-            return Vec3(dx, dy, 0)
-        pos_s = start_pos
-        pos_p = end_pos
-        inc = towards(pos_s, pos_p)
+    def scan(self, pos, vector):
+        vector.normalize()
         while True:
-            pos_s -= inc
-            px, py = int(pos_p.x),int(pos_p.y)
-            sx, sy = int(pos_s.x),int(pos_s.y)
-            t = base.map.tiles[sx, -sy]
+            pos += vector
+            x,y,z = pos
+            t = base.map.tiles[round(x),round(-y)]
             if t.char == "#":
-                return None
-            elif sx == px and sy == py:
-                return end_pos
+                return False
+            else:
+                return True
 
     def flow_field(self, start_tile, target_tile):
         marks = {target_tile: 0}

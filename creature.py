@@ -9,38 +9,42 @@ from items import *
 class Interface(): # takes care of player logic and ai response
     def update(self):
         player = base.player
-        context = base.device_listener.read_context('ew')
-        current = player.root.get_pos()
-        new_pos = None
         turn_over = False
-        time = base.turn_speed
-        if int(context["move"].x):         
-            new_pos = Vec3(current.x+int(context["move"].x), current.y, 0)
-        elif int(context["move"].y):
-            new_pos = Vec3(current.x, current.y+int(context["move"].y), 0)
-        if new_pos:
-            x, y = int(new_pos.x), -int(new_pos.y)
-            destination_tile = base.map.tiles[x, y]
-            if destination_tile.char == "#":
-                return
-            elif destination_tile.char == "=":
-                if not destination_tile.open:
-                    destination_tile.activate()
+        if player.alive:
+            context = base.device_listener.read_context('ew')
+            current = player.root.get_pos()
+            new_pos = None
+            time = base.turn_speed
+            if int(context["move"].x):         
+                new_pos = Vec3(current.x+int(context["move"].x), current.y, 0)
+            elif int(context["move"].y):
+                new_pos = Vec3(current.x, current.y+int(context["move"].y), 0)
+            if new_pos:
+                x, y = int(new_pos.x), -int(new_pos.y)
+                destination_tile = base.map.tiles[x, y]
+                if destination_tile.char == "#":
                     return
-            player.animate("walk", False)
-            player.move_to(new_pos)
-            base.map.set(new_pos)
-            turn_over = True
-        elif context["fire"]:
-            turn_over = player.fire()
-        elif context["reload"]:
-            turn_over = player.reload()
-        else:
-            player.aim()
-            player.stop()
-        if turn_over:            
+                elif destination_tile.char == "=":
+                    if not destination_tile.open:
+                        destination_tile.activate()
+                        return
+                player.animate("walk", False)
+                player.move_to(new_pos)
+                player.root.set_x(x)
+                player.root.set_y(-y)
+                base.map.set(new_pos)
+                turn_over = True
+            elif context["fire"]:
+                turn_over = player.fire()
+            elif context["reload"]:
+                turn_over = player.reload()
+            else:
+                player.aim()
+                player.stop()
+        if turn_over:
             for enemy in base.map.enemies:
                 enemy.update()
+            base.sequence_player.finalize()
         else:
             for enemy in base.map.enemies:
                 enemy.reset()
@@ -54,7 +58,10 @@ class Creature():
         self.root.setLODAnimation(1, 0.1, 0.0075)
         self.root.loop("idle")
         self.root.reparent_to(render)
-        
+        self.distance = 99999
+        self.alive = True
+        self.hp = 1
+       
     def stop(self):
         if not self.root.getCurrentAnim() == "idle":
             self.root.loop("idle")
@@ -75,6 +82,7 @@ class Player(Creature):
             pos
         )
         self.inventory = []
+        self.hp = 2
         self.weapon = Weapon()
         self.weapon.hold(self)
         self.aim_select = 0
@@ -91,16 +99,36 @@ class Player(Creature):
         arms = self.root.find("**/arms")
         arms.set_color((0.1,0.1,0.1,1))
 
+    def hurt(self, amt, attacker):
+        self.hp -= amt
+        if self.hp > 0:
+            base.sequence_player.add_to_sequence(
+                Sequence(
+                    Wait(0.2),
+                    Func(self.root.play, "hurt"),
+                    Func(self.root.look_at, attacker.root),
+                )
+            )
+        else:
+            self.alive = False
+            base.sequence_player.add_to_sequence(
+                Sequence(
+                    Wait(0.2),
+                    Func(self.root.play, "die"),
+                    Func(self.root.look_at, attacker.root),
+                )
+            )
+        base.sequence_player.hold(1)
+
     def aim(self):
         visable = []
         for enemy in base.map.enemies:
             if base.map.scan(self.root.get_pos(), enemy.root.get_pos()):
                 visable.append(enemy)
                 enemy.root.show()
-            else:
-                enemy.root.hide()
+
         for enemy in visable:
-            vector = self.root.getPos() - enemy.root.getPos()
+            vector = self.root.get_pos() - enemy.root.get_pos()
             enemy.distance = vector.get_xy().length()
         base.map.enemies.sort(key=lambda x: x.distance, reverse=False)
         try:
@@ -116,7 +144,6 @@ class Player(Creature):
             self.weapon.clip[0] += 1
             self.animate("reload", False)
             self.crosshair.hide()        
-            base.sequence_player.wait = 5
             base.sequence_player.hold(1)
             return True
         else:
@@ -153,8 +180,6 @@ class Enemy(Creature):
         Creature.__init__(self, name, model, pos)
         self.goto = None
         self.wait = True
-        self.alive = True
-        self.hp = 1
 
     def hurt(self):
         self.hp -= 1
@@ -173,9 +198,10 @@ class Enemy(Creature):
         self.root.detach_node()
 
     def attack(self):
-        self.root.look_at(base.player.root)        
         self.root.play("attack")
-        base.sequence_player.hold(1.5)
+        self.root.look_at(base.player.root)
+        base.sequence_player.wait = 1
+        base.player.hurt(1, self)
 
     def update(self):
         if not self.alive:
@@ -183,7 +209,7 @@ class Enemy(Creature):
             base.task_mgr.doMethodLater(3, self.detach, "ok")
             return
         if not self.wait:
-            self.wait = True
+            #self.wait = True
             self.root.loop("move")
             x,y,z = self.root.get_pos()
             a = base.map.tiles[int(x),int(-y)]
@@ -198,6 +224,8 @@ class Enemy(Creature):
                 self.move_to((x,-y,0))
         else:
             self.wait = False
+
+
 
 
 class Worm(Enemy):

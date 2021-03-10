@@ -75,6 +75,7 @@ class Door(Tile):
             toData=0, duration=0.25,
         )
         base.sequence_player.add_to_sequence(lerp)
+        base.sequence_player.finalize()
         base.map.build(self.direction)
         self.open = True
     
