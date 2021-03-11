@@ -40,8 +40,10 @@ class Interface(): # takes care of player logic and ai response
                 turn_over = True
             elif context["fire"]:
                 turn_over = player.fire()
-            elif context["reload"]:
-                turn_over = player.reload()
+            elif context["reload_violet"]:
+                turn_over = player.reload(0)
+            elif context["reload_cyan"]:
+                turn_over = player.reload(1)
             else:
                 player.stop()
         if turn_over:
@@ -157,13 +159,12 @@ class Player(Creature):
             self.crosshair.hide()
             self.aimed = None
 
-    def reload(self):
-        if self.weapon.clip[0]<self.weapon.clip[1]:
-            self.weapon.clip[0] += 1
+    def reload(self, bullet):
+        if self.weapon.clip[0] == 0 or self.weapon.clip[1] == 0:
+            self.weapon.next_bullet = bullet
+            self.weapon.reload()
             self.animate("reload", False)
-            base.hudgun.play("reload")
             base.sequence_player.hold(0.6)
-            base.task_mgr.doMethodLater(0.4, base.set_hud_bullets, name="ok2")
             return True
         else:
             return False
@@ -171,14 +172,10 @@ class Player(Creature):
     def fire(self):
         if self.aimed:
             if self.weapon.clip[0] > 0:
-                self.weapon.clip[0] -= 1
+                self.weapon.fire(self.aimed)
                 self.root.look_at(self.aimed.root)
                 self.animate("fire", False)
-                base.hudgun.play("fire")
-                base.sequence_player.wait = 0.7
-                self.weapon.activate(self,self.aimed)
-                self.aimed.hurt()
-                base.task_mgr.doMethodLater(0.2, base.set_hud_bullets, name="ok2")
+
             else:
                 return False
         else:
@@ -198,6 +195,15 @@ class Player(Creature):
 class Enemy(Creature):
     def __init__(self, name, model, pos):
         Creature.__init__(self, name, model, pos)
+        self.color = randint(0,1)
+        l = self.root.find("**/l")
+        d = self.root.find("**/d")
+        if self.color == 0:
+            l.set_color(0.01,1,1,1)
+            d.set_color(0.005,0.5,0.5,1)
+        elif self.color == 1:
+            l.set_color(1,0.01,1,1)
+            d.set_color(0.5,0.005,0.5,1)
         self.last_seen = None
         self.wait = True
 

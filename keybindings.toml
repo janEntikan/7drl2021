@@ -8,11 +8,17 @@
   [ew.fire]
   _type = "button"
   _device_order = ["gamepad", "keyboard"]
-  gamepad = "face_y"
-  keyboard = "space"
+  gamepad = "face_x"
+  keyboard = "x"
 
-  [ew.reload]
+  [ew.reload_violet]
   _type = "button"
   _device_order = ["gamepad", "keyboard"]
-  gamepad = "face_x"
-  keyboard = "r"
+  gamepad = "face_y"
+  keyboard = "v"
+
+  [ew.reload_cyan]
+  _type = "button"
+  _device_order = ["gamepad", "keyboard"]
+  gamepad = "face_z"
+  keyboard = "c"

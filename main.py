@@ -102,7 +102,6 @@ class Base(ShowBase):
         self.interface = Interface()
         self.bg_color = VBase4(0, 0, 0, 1)
 
-
         card, scene, camera, self.buffer = self.make_render_card()
         card.set_x(-0.25)
         self.camera = camera
@@ -124,7 +123,7 @@ class Base(ShowBase):
         self.hudgun.reparent_to(scene)
         self.hudgun.find("**/hand_healthy").show()
         self.hudgun.find("**/hand_hurt").hide()
-        self.hudgun.setLODAnimation(1, 0.1, 0.0075)
+        self.hudgun.setLODAnimation(1, 0.1, 0.005)
 
         camera.look_at(self.hudgun)
         camera.set_pos(0.5,-1.5,10)
@@ -133,13 +132,6 @@ class Base(ShowBase):
         card.set_x(1-(1/4))
         self.quad = None
         #self.setup_post_effect()
-
-    def set_hud_bullets(self, task):
-        for b, bullet in enumerate(self.hudgun.find_all_matches("**/chamber_bullet*")):
-            if b < base.player.weapon.clip[0]:
-                bullet.show()
-            else:
-                bullet.hide()
 
     def innitialize_fov(self):
         render.set_shader_auto()
