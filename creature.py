@@ -34,7 +34,7 @@ class Interface(): # takes care of player logic and ai response
                         destination_tile.activate()
                         return
                 base.sound.play("step")
-                player.animate("walk", False)
+                player.animate("walk", True)
                 player.move_to(new_pos)
                 player.root.set_x(x)
                 player.root.set_y(-y)
