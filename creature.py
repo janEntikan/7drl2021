@@ -289,8 +289,9 @@ class Worm(Enemy):
         self.hp = 1
         self.speed = 1
 
-    def hurtsound(self):
-        base.sound.play("woo1")
+        self.hurtsound = "woo1"
+        self.diesound = "kill4"
+        self.attacksound = "woo2"
 
 
 
@@ -305,6 +306,11 @@ class Slug(Enemy):
         self.hp = 2
         self.speed = 4
 
+        self.hurtsound = "woo3"
+        self.diesound = "kill1"
+        self.attacksound = "woo4"
+
+
 
 class Centipede(Enemy):
     def __init__(self, pos):
@@ -317,6 +323,11 @@ class Centipede(Enemy):
         self.speed = 1
         self.hp = 2
 
+        self.hurtsound = "woo4"
+        self.diesound = "kill2"
+        self.attacksound = "woo5"
+
+
 
 class Blob(Enemy):
     def __init__(self, pos):
@@ -328,6 +339,10 @@ class Blob(Enemy):
         self.root.set_scale(uniform(0.2,0.4))
         self.hp = 1
         self.speed = 2
+        self.hurtsound = "woo5"
+        self.diesound = "kill3"
+        self.attacksound = "woo6"
+
 
 
 class Jelly(Enemy):
@@ -340,3 +355,6 @@ class Jelly(Enemy):
         self.root.set_scale(uniform(0.5,0.9))
         self.hp = 4
         self.speed = 2
+        self.hurtsound = "squeel"
+        self.diesound = "kill4"
+        self.attacksound = "scream"
