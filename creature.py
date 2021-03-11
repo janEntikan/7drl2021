@@ -26,7 +26,7 @@ class Interface(): # takes care of player logic and ai response
                     if round(ex) == x and round(ey) == -y:
                         return
                 destination_tile = base.map.tiles[x, y]
-                if destination_tile.char == "#":
+                if destination_tile.char in "#P":
                     return
                 elif destination_tile.char == "=":
                     if not destination_tile.open:
@@ -94,6 +94,7 @@ class Player(Creature):
         self.crosshair = base.icons["crosshair"]
         self.crosshair.set_scale(0.5)
         self.color()
+        self.room = 0
 
     def color(self):
         chest = self.root.find("**/torso")
@@ -161,7 +162,8 @@ class Player(Creature):
             self.weapon.clip[0] += 1
             self.animate("reload", False)
             base.hudgun.play("reload")
-            base.sequence_player.hold(1)
+            base.sequence_player.hold(0.6)
+            base.task_mgr.doMethodLater(0.4, base.set_hud_bullets, name="ok2")
             return True
         else:
             return False
@@ -173,9 +175,10 @@ class Player(Creature):
                 self.root.look_at(self.aimed.root)
                 self.animate("fire", False)
                 base.hudgun.play("fire")
-                base.sequence_player.wait = 1
+                base.sequence_player.wait = 0.7
                 self.weapon.activate(self,self.aimed)
                 self.aimed.hurt()
+                base.task_mgr.doMethodLater(0.2, base.set_hud_bullets, name="ok2")
             else:
                 return False
         else:
@@ -185,11 +188,11 @@ class Player(Creature):
     def animate(self, animation, loop=True):
         if self.weapon:
             n = self.weapon.is_twohand(animation)
-            if not self.root.getCurrentAnim() == n:
-                if loop:
+            if loop:
+                if not self.root.getCurrentAnim() == n:
                     self.root.loop(n)
-                else:
-                    self.root.play(n)
+            else:
+                self.root.play(n)
 
 
 class Enemy(Creature):
@@ -232,8 +235,7 @@ class Enemy(Creature):
             base.task_mgr.doMethodLater(3, self.detach, "ok")
             return
         if not self.wait and self.last_seen:
-            print(self.last_seen, base.player.root.get_pos())
-            if randint(0,1):
+            if randint(0,self.speed):
                 self.wait = True
             self.root.loop("move")
             x,y,z = self.root.get_pos()
@@ -260,11 +262,57 @@ class Enemy(Creature):
 
 
 class Worm(Enemy):
-    def __init__(self, type, pos):
+    def __init__(self, pos):
         Enemy.__init__(
             self, "worm",
             Actor("assets/models/creatures/worm.bam"),
             pos,
         )
         self.root.set_scale(uniform(0.5,0.9))
+        self.hp = 1
+        self.speed = 1
 
+class Slug(Enemy):
+    def __init__(self, pos):
+        Enemy.__init__(
+            self, "slug",
+            Actor("assets/models/creatures/slug.bam"),
+            pos,
+        )
+        self.root.set_scale(uniform(0.5,0.9))
+        self.hp = 2
+        self.speed = 1
+
+
+class Centipede(Enemy):
+    def __init__(self, pos):
+        Enemy.__init__(
+            self, "centipede",
+            Actor("assets/models/creatures/centipede.bam"),
+            pos,
+        )
+        self.root.set_scale(uniform(0.6,0.9))
+        self.speed = 4
+        self.hp = 3
+
+class Blob(Enemy):
+    def __init__(self, pos):
+        Enemy.__init__(
+            self, "blob",
+            Actor("assets/models/creatures/blob.bam"),
+            pos,
+        )
+        self.root.set_scale(uniform(0.2,0.4))
+        self.hp = 1
+        self.speed = 1
+
+class Jelly(Enemy):
+    def __init__(self, pos):
+        Enemy.__init__(
+            self, "jelly",
+            Actor("assets/models/creatures/jelly.bam"),
+            pos,
+        )
+        self.root.set_scale(uniform(0.5,0.9))
+        self.hp = 3
+        self.speed = 10

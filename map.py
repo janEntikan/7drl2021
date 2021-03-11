@@ -20,7 +20,10 @@ OPPOSITE = {
 class Props():
     def __init__(self):
         self.floor = randint(0,3)
-        self.wall = 0
+        self.wall = randint(0,2)
+        self.prop = randint(0,2)
+        self.prop_angle = randint(0,3)
+
 
 class Room():
     def __init__(self, x, y):
@@ -30,6 +33,7 @@ class Room():
         self.root = base.map.static.attach_new_node("room")
         self.unlit = base.map.unlit.attach_new_node("room")
         self.backsides = base.map.backsides.attach_new_node("room")
+        self.enemies = 0
         self.construct()
 
     def construct(self):
@@ -76,6 +80,7 @@ class Room():
 
     def draw(self, x, y, char):
         base.map.tiles[x,y] = Tile(self.props, [x, y], char)
+        self.add_enemies(x, y)
 
     def draw_line(self, x1, y1, x2, y2, char):
         #self.draw(x1, y1, char)
@@ -87,25 +92,38 @@ class Room():
             else: return
             self.draw(x1, y1, char)
 
-    def draw_square(self, rect, chance=9):
+    def draw_square(self, rect, chance=10):
         for y in range(rect[3]):
             for x in range(rect[2]):
                 if randint(0,chance):
                     rx, ry = rect[0]+x, rect[1]+y
                     self.draw(rx, ry, " ")
-                    if not randint(0,9):
-                        w = Worm("fat",(rx, -ry, 0))
-                        w.root.hide()
-                        base.map.enemies.append(w)
 
     def generate(self):
         self.connect_doors()
         x, y, w, h = self.rect
-        w = randint(1,self.rect[2]-2)
-        h = randint(1,self.rect[3]-2)
+        w = randint(2,self.rect[2]-2)
+        h = randint(2,self.rect[3]-2)
         x += (self.rect[2]//2)-(w//2)
         y += (self.rect[3]//2)-(h//2)
         self.draw_square((x,y,w,h))
+
+    def add_enemies(self, x, y):
+        max_enemies = (base.map.rooms_visited*2)*4
+        self.enemies += 1
+        if self.enemies > max_enemies:
+            return
+        if not randint(0,5):
+            enemy_level = base.map.current_set
+            r = randint(0,2)
+            if enemy_level > 0 and not r:
+                enemy_level -= 1
+            elif enemy_level < len(base.map.enemy_types) and not r:
+                enemy_level += 1
+            Enemy = base.map.enemy_types[enemy_level]
+            w = Enemy((x, -y, 0))
+            w.root.hide()
+            base.map.enemies.append(w)
 
     def finalize(self):
         for y in range(self.rect[3]):
@@ -114,7 +132,7 @@ class Room():
                 if not t.char == "#":
                     if not t.made:
                         t.made = True
-                        t.get_surrounding_tiles()
+                        t.get_access()
                         t.make_mesh()
                         t.root.reparent_to(self.root)
                         t.unlit.reparent_to(self.unlit)
@@ -136,8 +154,22 @@ class Map(Maze):
         self.dynamic = render.attach_new_node("map-dynamic")
         self.enemies = []
         self.rooms = {}
-        self.load_tile_set()
-
+        self.rooms_visited = 0
+        self.sets = [
+            "mine",
+            "engineering",
+            "medical",
+            "rnd",
+            "quarters",
+            "bridge",
+        ]
+        self.enemy_types = [Worm,Slug,Blob,Centipede,Jelly]
+        self.current_set = 0
+        self.tile_sets = {}
+        for set in self.sets:
+            self.tile_sets[set] = self.load_tile_set(set)
+        self.tile_set = self.tile_sets[self.sets[self.current_set]]
+        
     def pos(self, size):
         return self.current_room.x*8, self.current_room.y*8
 
@@ -148,16 +180,23 @@ class Map(Maze):
         self._current_room = x, y
 
     def load_tile_set(self, name="medical"):
-        self.tile_set = {}
+        tile_set = {}
         tile_set_root = loader.load_model("assets/models/decks/"+name+".bam")
         for child in tile_set_root.get_children():
-            self.tile_set[child.name] = child
+            tile_set[child.name] = child
             child.detach_node()
             child.clear_transform()
-        self.tile_set["door"] = Actor("assets/models/decks/doors.bam")
+        tile_set["door"] = Actor("assets/models/decks/doors.bam")
+        return tile_set
 
     def build(self, direction):
         self.move(direction)
+        if not self.current_room.is_dead_end:
+            self.rooms_visited += 1
+        if self.rooms_visited%2 == 0:
+            self.current_set += 1
+            self.tile_set = self.tile_sets[self.sets[self.current_set]]
+
         p = self.pos(8)
         if not p in self.rooms:
             self.rooms[p] = Room(*p)

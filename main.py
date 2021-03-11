@@ -5,6 +5,7 @@ from direct.interval.IntervalGlobal import Parallel
 from direct.interval.IntervalGlobal import Func 
 from direct.interval.IntervalGlobal import Wait
 from direct.actor.Actor import Actor
+from direct.filter.FilterManager import FilterManager
 from panda3d.core import load_prc_file
 from panda3d.core import Filename
 from panda3d.core import CardMaker
@@ -12,6 +13,9 @@ from panda3d.core import LineSegs
 from panda3d.core import NodePath
 from panda3d.core import PointLight
 from panda3d.core import AmbientLight
+
+from panda3d.core import Shader
+from panda3d.core import Texture
 from panda3d.core import VBase4
 from panda3d.core import OrthographicLens
 from panda3d.core import FrameBufferProperties
@@ -98,7 +102,9 @@ class Base(ShowBase):
         self.interface = Interface()
         self.bg_color = VBase4(0, 0, 0, 1)
 
+
         card, scene, camera, self.buffer = self.make_render_card()
+        card.set_x(-0.25)
         self.camera = camera
         self.load_icons()
         self.map = Map()
@@ -125,22 +131,37 @@ class Base(ShowBase):
         camera.set_p(-90)
         card.set_scale(1/4,1,1)
         card.set_x(1-(1/4))
+        self.quad = None
+        #self.setup_post_effect()
+
+    def set_hud_bullets(self, task):
+        for b, bullet in enumerate(self.hudgun.find_all_matches("**/chamber_bullet*")):
+            if b < base.player.weapon.clip[0]:
+                bullet.show()
+            else:
+                bullet.hide()
 
     def innitialize_fov(self):
         render.set_shader_auto()
         self.fov_point = PointLight("caster")
-        self.fov_point.set_shadow_caster(True, 256, 256, -1000)
+        self.fov_point.set_shadow_caster(True, 256*2, 256*2, -1000)
         self.fov_point.set_camera_mask(0b001)
         self.player.root.hide(0b001)
+        self.map.dynamic.hide(0b001)
         self.fov_point.set_lens_active(4, False)
         self.fov_point.set_lens_active(5, False)
         for i in range(6):
-            self.fov_point.get_lens(i).set_near_far(0.1, 40)
+            self.fov_point.get_lens(i).set_near_far(0.5, 10)
         self.fov_point_np = self.player.root.attach_new_node(self.fov_point)
         self.fov_point_np.set_z(0.5)
         self.fov_point.set_color(VBase4(1,1,1,1))
         self.fov_point.set_scene(self.map.root)
-        for target_np in [self.map.static, self.map.backsides]:
+        for target_np in [
+            self.map.static, 
+            self.map.backsides,
+            self.map.unlit,
+            self.map.dynamic,
+        ]:
             target_np.set_attrib(
                 LightRampAttrib.make_single_threshold(0.0, 1.0)
             )
@@ -166,6 +187,15 @@ class Base(ShowBase):
         card.set_texture(texture)
         return card, scene, camera, buffer
 
+    def setup_post_effect(self):
+        self.manager = FilterManager(base.win, base.cam2d)
+        tex = Texture()
+        dtex = loader.load_texture("assets/noise.png")
+        self.quad = self.manager.renderSceneInto(colortex=tex)
+        self.quad.setShader(Shader.load(Shader.SL_GLSL, "crt.vert","crt.frag"))
+        self.quad.setShaderInput("iResolution", (800,600))
+        self.quad.setShaderInput("iChannel0", tex)
+
     def load_icons(self):
         model = loader.load_model("assets/models/icons.bam")
         self.icons = {}
@@ -178,6 +208,8 @@ class Base(ShowBase):
         self.dt = globalClock.get_dt()
         if not self.sequence_player.parallel:
             self.interface.update()
+        if self.quad:
+            self.quad.setShaderInput("iTime", globalClock.getLongTime())
         return task.cont
 
 

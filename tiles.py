@@ -3,6 +3,19 @@ from random import randint, uniform, choice
 from panda3d.core import NodePath
 
 
+DIRS = [(0,1),(1, 0),(0,-1),(-1,0)]
+ITEM_SPOTS = [
+    [True,True,True,False],
+    [True,True,False,True],
+    [True,False,True,True],
+    [False,True,True,True],
+]
+PROP_SPOT = [
+    [True,True,True,True],
+]
+
+
+
 class Tile():
     def __init__(self, props=None, pos=(0,0), char="#"):
         self.props = props
@@ -13,45 +26,55 @@ class Tile():
         self.backsides = NodePath("tile_backsides")
         self.root.set_pos(pos[0], -pos[1], 0)
         self.unlit.set_pos(pos[0], -pos[1], 0)
-
         self.char = char
-        self.surrounding = [
-            [None,None,None],
-            [None,self,None],
-            [None,None,None],
-        ]    
+        self.access = [True,True,True,True]
         self.neighbors = []
 
-    def get_surrounding_tiles(self):
-        for sy in range(3):
-            for sx in range(3):
-                x = self.pos[0]-1+sx
-                y = self.pos[1]-1+sy
-                tile = self.surrounding[sy][sx] = base.map.tiles[x,y]
+    def get_access(self):
+        for d, dir in enumerate(DIRS):
+            x = self.pos[0]+dir[0]
+            y = self.pos[1]+dir[1]
+            tile = base.map.tiles[x,y]
+            if tile.char == "#":
+                self.access[d] = False
+
+    def add_prop(self):
+        uneven = self.pos[0]%2 == 1 and self.pos[1]%2 == 1
+        if self.access in PROP_SPOT and uneven:
+            self.char = "P"
+            name = "block_prop_"+str(self.props.prop)
+            p = base.map.tile_set[name].copy_to(self.unlit)
+            p.set_h(self.props.prop_angle*90)
 
     def make_mesh(self):
         self.make_walls()
+        self.add_prop()
 
     def make_walls(self):
-        f = base.map.tile_set["floor_"+str(self.props.floor)].copy_to(self.root)
+        floor = "floor_"+str(self.props.floor)
+        if not floor in base.map.tile_set:
+            floor = "floor__0"
+        f = base.map.tile_set[floor].copy_to(self.unlit)
+
         light = self.pos[0]%2 == 1 and self.pos[1]%2 == 1
-        vent = self.pos[0]%4 == 1 and self.pos[1]%4 == 1 
-        for angle, offset in enumerate(((0,1), (1,0), (2,1), (1,2))):
-            if self.surrounding[offset[1]][offset[0]]:
-                neighbour = self.surrounding[offset[1]][offset[0]]
-                if neighbour.char == "#":
-                    wall_type = "wall_"+str(self.props.wall)
-                    w = base.map.tile_set[wall_type].copy_to(self.root)
-                    heading = -angle*90 
-                    w.set_h(heading)
-                    if light:
-                        l = base.map.tile_set["light"].copy_to(self.unlit)
-                        l.set_h(heading)
-                    if not randint(0,8):
-                        p = randint(0,4)
+        for angle, access in enumerate(self.access):
+            if not access:
+                wall_type = "wall_"+str(self.props.wall)
+                if not wall_type in base.map.tile_set:
+                    wall_type = "wall_0"
+                w = base.map.tile_set[wall_type].copy_to(self.root)
+                heading = (angle+1)*90 
+                w.set_h(heading)
+                if light:
+                    l = base.map.tile_set["light"].copy_to(self.unlit)
+                    l.set_h(heading)
+                if not randint(0,8):
+                    p = randint(0,3)
+                    try:
                         l = base.map.tile_set["wall_prop_"+str(p)].copy_to(self.unlit)
                         l.set_h(heading)                        
-
+                    except:
+                        pass
 
 class Door(Tile):
     def __init__(self, props, pos, direction):
