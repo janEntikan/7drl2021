@@ -124,7 +124,7 @@ class Base(ShowBase):
         self.hudgun.find("**/hand_healthy").show()
         self.hudgun.find("**/hand_hurt").hide()
         self.hudgun.setLODAnimation(1, 0.1, 0.005)
-
+        self.player.weapon.set_hud_bullets()
         camera.look_at(self.hudgun)
         camera.set_pos(0.5,-1.5,10)
         camera.set_p(-90)

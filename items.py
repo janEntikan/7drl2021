@@ -67,7 +67,7 @@ class Weapon():
         user.root.expose_joint(self.hold_node, "modelRoot", "hand.r")
         self.icon.set_hpr(20,90,-90)
 
-    def set_hud_bullets(self, task):
+    def set_hud_bullets(self, task=None):
         hudgun = base.hudgun
         indicators = (
             hudgun.find("**/indicator_pink"),
