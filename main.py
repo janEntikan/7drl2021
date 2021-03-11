@@ -29,6 +29,7 @@ from keybindings.device_listener import add_device_listener
 from keybindings.device_listener import SinglePlayerAssigner
 
 from map import Map, Room
+from sound import SoundManager
 from creature import Interface, Player
 
 
@@ -92,7 +93,7 @@ class Base(ShowBase):
             assigner=SinglePlayerAssigner(),
         )
         base.disableMouse() 
-
+        self.sound = SoundManager()
         self.linefx = LineEffects()
         self.cardmaker = CardMaker("card")
         self.cardmaker.set_frame(-1,1,-1,1)

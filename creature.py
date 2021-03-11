@@ -30,8 +30,10 @@ class Interface(): # takes care of player logic and ai response
                     return
                 elif destination_tile.char == "=":
                     if not destination_tile.open:
+                        base.sound.play("door")
                         destination_tile.activate()
                         return
+                base.sound.play("step")
                 player.animate("walk", False)
                 player.move_to(new_pos)
                 player.root.set_x(x)
@@ -47,10 +49,10 @@ class Interface(): # takes care of player logic and ai response
             else:
                 player.stop()
         if turn_over:
+            player.aim()
             for enemy in base.map.enemies:
                 enemy.update()
             base.sequence_player.finalize()
-            player.aim()
         else:
             for enemy in base.map.enemies:
                 enemy.reset()
@@ -123,9 +125,11 @@ class Player(Creature):
             )
         else:
             self.alive = False
+            base.sound.play("die")
             base.sequence_player.add_to_sequence(
                 Sequence(
                     Wait(0.2+delay),
+
                     Func(self.root.play, "die"),
                     Func(self.root.look_at, attacker.root),
                 )
@@ -147,7 +151,7 @@ class Player(Creature):
                 else:
                     enemy.root.hide()
             else:
-                base.map.enemies.remove(enemies)
+                base.map.enemies.remove(enemy)
                 enemy.detach()
         base.map.enemies.sort(key=lambda x: x.distance, reverse=False)
         try:
@@ -163,6 +167,7 @@ class Player(Creature):
         if self.weapon.clip[0] == 0 or self.weapon.clip[1] == 0:
             self.weapon.next_bullet = bullet
             self.weapon.reload()
+            base.sound.play("reload")
             self.animate("reload", False)
             base.sequence_player.hold(0.6)
             return True
@@ -172,6 +177,7 @@ class Player(Creature):
     def fire(self):
         if self.aimed:
             if self.weapon.clip[0] > 0:
+                base.sound.play("laser")
                 self.weapon.fire(self.aimed)
                 self.root.look_at(self.aimed.root)
                 self.animate("fire", False)
@@ -206,13 +212,18 @@ class Enemy(Creature):
             d.set_color(0.5,0.005,0.5,1)
         self.last_seen = None
         self.wait = True
+        self.hurtsound = "woo1"
+        self.diesound = "kill1"
+        self.attacksound = "woo6"
 
     def hurt(self):
         self.hp -= 1
         self.wait = True
         if self.hp > 0:
             self.root.play("hurt")
+            base.sound.play(self.hurtsound)
         else:
+            base.sound.play(self.diesound)
             self.alive = False
             self.root.play("die")
 
@@ -224,10 +235,12 @@ class Enemy(Creature):
         self.root.detach_node()
 
     def attack(self):
+        base.sound.play(self.attacksound)
         delay = uniform(0,0.2)
         base.sequence_player.add_to_sequence(
             Sequence(
                 Wait(delay),
+                Func(base.sound.play, "impact"+str(randint(1,4))),
                 Func(self.root.play, "attack"),
             )
         )
@@ -240,9 +253,13 @@ class Enemy(Creature):
             base.map.enemies.remove(self)
             base.task_mgr.doMethodLater(3, self.detach, "ok")
             return
+
+        if self.distance <= 1.0:
+            self.attack()
+            return
+        if randint(0,self.speed):
+            self.wait = True
         if not self.wait and self.last_seen:
-            if randint(0,self.speed):
-                self.wait = True
             self.root.loop("move")
             x,y,z = self.root.get_pos()
             a = base.map.tiles[round(x),round(-y)]
@@ -252,10 +269,7 @@ class Enemy(Creature):
             x,y = self.next_tile.pos
             px,py,pz = self.last_seen
             if px == x and -py == y:
-                if self.last_seen == base.player.root.get_pos():
-                    self.attack()
-                else:
-                    self.last_seen = None
+                self.last_seen = None
             else:
                 o = 0.2
                 x += uniform(-o,o)
@@ -263,9 +277,6 @@ class Enemy(Creature):
                 self.move_to((x,-y,0))
         else:
             self.wait = False
-
-
-
 
 class Worm(Enemy):
     def __init__(self, pos):
@@ -278,6 +289,11 @@ class Worm(Enemy):
         self.hp = 1
         self.speed = 1
 
+    def hurtsound(self):
+        base.sound.play("woo1")
+
+
+
 class Slug(Enemy):
     def __init__(self, pos):
         Enemy.__init__(
@@ -287,7 +303,7 @@ class Slug(Enemy):
         )
         self.root.set_scale(uniform(0.5,0.9))
         self.hp = 2
-        self.speed = 1
+        self.speed = 4
 
 
 class Centipede(Enemy):
@@ -298,8 +314,9 @@ class Centipede(Enemy):
             pos,
         )
         self.root.set_scale(uniform(0.6,0.9))
-        self.speed = 4
-        self.hp = 3
+        self.speed = 1
+        self.hp = 2
+
 
 class Blob(Enemy):
     def __init__(self, pos):
@@ -310,7 +327,8 @@ class Blob(Enemy):
         )
         self.root.set_scale(uniform(0.2,0.4))
         self.hp = 1
-        self.speed = 1
+        self.speed = 2
+
 
 class Jelly(Enemy):
     def __init__(self, pos):
@@ -320,5 +338,5 @@ class Jelly(Enemy):
             pos,
         )
         self.root.set_scale(uniform(0.5,0.9))
-        self.hp = 3
-        self.speed = 10
+        self.hp = 4
+        self.speed = 2

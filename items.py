@@ -1,6 +1,6 @@
 from direct.interval.IntervalGlobal import LerpFunctionInterval, Func, Wait, Sequence
 from panda3d.core import NodePath
-
+from random import randint
 
 class Item():
     def __init__(self):
@@ -106,6 +106,8 @@ class Weapon():
     def fire(self, aimed):
         if not self.clip[0]-1 == aimed.color:
             aimed.hurt()
+            base.sound.play("impact1")
+
         self.clip[0] = self.clip[1]
         self.clip[1] = 0
         base.hudgun.play("fire")

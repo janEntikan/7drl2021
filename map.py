@@ -44,7 +44,7 @@ class Room():
 
     def set_neighbors(self):
         dirs = [[0,-1], [1,0], [0,1], [-1,0]]
-        solids = "#"
+        solids = "#P"
         for y in range(self.rect[3]+2):
             for x in range(self.rect[2]+2):
                 sx = x-1+self.rect[0]
@@ -196,7 +196,7 @@ class Map(Maze):
         self.move(direction)
         if not self.current_room.is_dead_end:
             self.rooms_visited += 1
-        if self.rooms_visited%5 == 0:
+        if self.rooms_visited%3 == 0:
             self.current_set += 1
             self.tile_set = self.tile_sets[self.sets[self.current_set]]
 
