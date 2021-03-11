@@ -109,13 +109,16 @@ class Room():
         self.draw_square((x,y,w,h))
 
     def add_enemies(self, x, y):
-        max_enemies = (base.map.rooms_visited*2)*4
-        self.enemies += 1
+        max_enemies = (base.map.rooms_visited*0.2)
         if self.enemies > max_enemies:
             return
         if not randint(0,5):
-            enemy_level = base.map.current_set
-            r = randint(0,2)
+            self.enemies += 1
+            if base.map.current_set < 2:
+                enemy_level = 0
+            else:
+                enemy_level = base.map.current_set
+            r = randint(0,3)
             if enemy_level > 0 and not r:
                 enemy_level -= 1
             elif enemy_level < len(base.map.enemy_types) and not r:
@@ -193,7 +196,7 @@ class Map(Maze):
         self.move(direction)
         if not self.current_room.is_dead_end:
             self.rooms_visited += 1
-        if self.rooms_visited%2 == 0:
+        if self.rooms_visited%5 == 0:
             self.current_set += 1
             self.tile_set = self.tile_sets[self.sets[self.current_set]]
 
