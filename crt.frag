@@ -37,13 +37,14 @@ vec3 DrawVignette( vec3 color, vec2 uv )
     return color;
 }
 
-vec3 DrawScanline( vec3 color, vec2 uv )
+/*vec3 DrawScanline( vec3 color, vec2 uv )
 {
     float scanline 	= clamp( 0.95 + 0.05 * cos( 3.14 * ( uv.y + 0.008 * osg_FrameTime ) * 240.0 * 1.0 ), 0.0, 1.0 );
     float grille 	= 0.85 + 0.15 * clamp( 1.5 * cos( 3.14 * uv.x * 640.0 * 1.0 ), 0.0, 1.0 );
     color *= scanline * grille * 1.2;
     return color;
-}
+}*/
+
 
 void main()
 {
@@ -67,18 +68,20 @@ void main()
     vec2 crtUV = CRTCurveUV( uv );
     uv = uv * 0.7 + crtUV * 0.3;
 
-    vec3 pat = texture2D(pattern, uv * vec2(256, 256) * vec2(iResolution.x / iResolution.y, 1) * 1 + vec2(0, osg_FrameTime * 2)).rgb;
+    vec3 pat = texture2D(pattern, (gl_FragCoord.xy - vec2(0, 0)) / (vec2(256, 256) * 0.005) + vec2(0, osg_FrameTime  * 0.5)).rgb;
 
-    vec3 tmp_color = texture2D(p3d_Texture0, uv + (pat.xy - vec2(0.5, 0.5)) * 0.003).rgb
-                   + texture2D(p3d_Texture0, uv + (pat.yz - vec2(0.5, 0.5)) * 0.003).rgb;
+    vec3 tmp_color = texture2D(p3d_Texture0, uv + (pat.xy - vec2(0.5, 0.5)) * 0.004).rgb
+                   + texture2D(p3d_Texture0, uv + (pat.yz - vec2(0.5, 0.5)) * 0.004).rgb;
     if ( crtUV.x < 0.0 || crtUV.x > 1.0 || crtUV.y < 0.0 || crtUV.y > 1.0 )
     {
         tmp_color = vec3( 0.0 );
     }
     tmp_color = DrawVignette( tmp_color, uv );
-    tmp_color = DrawScanline( tmp_color, uv );
+    //tmp_color = DrawScanline( tmp_color, uv );
 
-    tmp_color *= pat * 1.5;
+    tmp_color *= pat * 0.7;
+
+    tmp_color += texture2D(p3d_Texture0, uv).rgb * 0.2;
 
 	color 	= vec4( tmp_color, 1.0 );
     //gl_FragColor.w		= 1.0;
