@@ -63,7 +63,7 @@ class Texts():
         start = self.make_textnode(self.text, "Press FIRE to restart")
         start.set_scale(0.17)
         start.set_z(-0.3)
-        tip = self.make_textnode(self.text, self.next_tips[0].upper())
+        tip = self.make_textnode(self.text, self.next_tips[0])
         self.tips = self.next_tips[1:]
         if len(self.next_tips) == 0:
             self.next_tips = self.tips

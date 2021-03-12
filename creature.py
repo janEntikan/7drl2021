@@ -140,7 +140,6 @@ class Player(Creature):
     def hurt(self, amt, attacker, delay):
         self.hp -= amt
         if self.hp > 0:
-
             base.sequence_player.add_to_sequence(
                 Sequence(
                     Wait(0.2+delay),
@@ -206,6 +205,7 @@ class Player(Creature):
             if self.aim_select >= len(visable):
                 self.aim_select = 0
             self.aimed = visable[self.aim_select]
+            self.root.look_at(self.aimed.root)
             self.crosshair.reparent_to(self.aimed.root)
             self.crosshair.set_scale(render, 0.5)
             self.crosshair.set_z(0.01)
@@ -269,6 +269,7 @@ class Enemy(Creature):
         self.attacksound = "woo6"
 
     def hurt(self):
+        self.root.look_at(base.player.root)
         self.hp -= 1
         self.wait = True
         if self.hp > 0:

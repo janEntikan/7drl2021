@@ -168,7 +168,7 @@ class Room():
 
         self.enemies += 1
 
-        enemy_level = randint(base.map.current_set-2,base.map.current_set+2)
+        enemy_level = randint(base.map.current_set-2,base.map.current_set+1)
         if enemy_level < 0: enemy_level = 0
         if enemy_level >= len(base.map.enemy_types): enemy_level = len(base.map.enemy_types)-1
         if base.map.current_set < 1: enemy_level = 0
