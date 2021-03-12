@@ -67,7 +67,7 @@ class Texts():
         if len(self.next_tips) == 0:
             self.next_tips = self.tips
             shuffle(self.next_tips)
-        tip.set_scale(0.16)
+        tip.set_scale(0.17)
         tip.set_z(-2)
 
     def make_title(self):

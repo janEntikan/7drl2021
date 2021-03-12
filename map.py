@@ -156,7 +156,7 @@ class Room():
         base.player.end(p.get_pos(render))
         
     def sprinkle_enemies(self):
-        max_enemies = int(((base.map.rooms_visited))*0.6)+randint(0,2)
+        max_enemies = int(((base.map.rooms_visited))*0.5)+randint(0,1)
         for i in range(max_enemies):
             self.add_enemies(*self.get_empty())
 

@@ -219,6 +219,8 @@ class Base(ShowBase):
         if context["quit"]:
             sys.exit()
         if not self.pause:
+            if self.player.alive:
+                base.texts.deactivate()
             if not self.sequence_player.parallel:
                 self.interface.update(context)
         else:
