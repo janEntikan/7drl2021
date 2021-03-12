@@ -223,9 +223,10 @@ class Base(ShowBase):
                 base.texts.deactivate()
             if not self.sequence_player.parallel:
                 self.interface.update(context)
-        else:
+        elif not self.sequence_player.parallel:
             if self.won:
                 return task.cont
+
             if context["select"]:
                 self.texts.deactivate()
                 self.pause = False
