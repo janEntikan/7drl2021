@@ -33,7 +33,7 @@ vec3 DrawVignette( vec3 color, vec2 uv )
 {
     float vignette = uv.x * uv.y * ( 1.0 - uv.x ) * ( 1.0 - uv.y );
     vignette = clamp( pow( 16.0 * vignette, 0.3 ), 0.0, 1.0 );
-    color *= vignette * vignette * vignette;
+    color *= pow(vignette, 2.5);
     return color;
 }
 

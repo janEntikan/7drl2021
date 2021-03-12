@@ -239,14 +239,14 @@ class Base(ShowBase):
                     self.texts.make_instructions()
                 else:
                     self.pause = False
-                if self.gameover:
-                    base.sound.stop("die")
-                    self.gameover = False
-                    self.map.destroy()
-                    self.map.new_game()
-                else:
-                    base.sound.music["opening"].stop()
-                    base.sound.music["background"].play()
+                    if self.gameover:
+                        base.sound.stop("die")
+                        self.gameover = False
+                        self.map.destroy()
+                        self.map.new_game()
+                    else:
+                        base.sound.music["opening"].stop()
+                        base.sound.music["background"].play()
         return task.cont
 
 if __name__ == "__main__":
