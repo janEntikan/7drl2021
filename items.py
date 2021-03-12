@@ -10,11 +10,21 @@ class Item():
         pass
 
 
-class Syringe(Item):
-    def __init__(self):
+class Healthpack(Item):
+    def __init__(self, pos):
         Item.__init__(self)
-        self.description = choice("")
+        self.model = base.icons["medpack"].copy_to(render)
+        self.model.set_pos(pos[0],-pos[1],0)
+        base.map.items.append(self)
+        self.model.set_scale(0.2)
 
+    def activate(self):
+        base.player.hp = 2
+        base.hudgun.find("**/hand_healthy").show()
+        base.hudgun.find("**/hand_hurt").hide()
+        base.map.items.remove(self)
+        self.model.detach_node()
+        base.sound.play("take")
 
 class Weapon():
     def __init__(self):
@@ -51,6 +61,7 @@ class Weapon():
                 base.linefx.draw_bullet, 
                 self.muzzle,
                 aimed.root.get_pos(),
+                self.clip[0],
             ),
             Wait(0.15),
             Func(
@@ -109,10 +120,9 @@ class Weapon():
         if not self.clip[0]-1 == aimed.color:
             aimed.hurt()
             base.sound.play("impact1")
-
-        self.clip[0] = self.clip[1]
-        self.clip[1] = 0
         base.hudgun.play("fire")
         base.sequence_player.wait = 0.7
         self.activate(self, aimed)
+        self.clip[0] = self.clip[1]
+        self.clip[1] = 0
         base.task_mgr.doMethodLater(0.2, self.set_hud_bullets, name="fire")

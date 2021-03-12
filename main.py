@@ -48,7 +48,14 @@ class LineEffects():
         if self.bullet:
             self.bullet.detach_node()
 
-    def draw_bullet(self, a, b):
+    def draw_bullet(self, a, b, color):
+        if color == 1:
+            color = (1,0,1,1)
+        elif color == 2:
+            color = (0,1,1,1)
+        else:
+            color = (1,1,1,1)
+        self.linesegs.set_color(color)
         a = a.get_pos(render)
         self.linesegs.move_to(a)
         self.linesegs.draw_to(b)

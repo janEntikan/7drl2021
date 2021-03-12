@@ -39,16 +39,14 @@ class Tile():
                 self.access[d] = False
 
     def add_prop(self):
-        uneven = self.pos[0]%2 == 1 and self.pos[1]%2 == 1
-        if self.access in PROP_SPOT and uneven:
-            self.char = "P"
-            name = "block_prop_"+str(self.props.prop)
-            p = base.map.tile_set[name].copy_to(self.unlit)
-            p.set_h(self.props.prop_angle*90)
+        name = "block_prop_"+str(self.props.prop)
+        p = base.map.tile_set[name].copy_to(self.unlit)
+        p.set_h(self.props.prop_angle*90)
 
     def make_mesh(self):
         self.make_walls()
-        self.add_prop()
+        if self.char == "P":
+            self.add_prop()
 
     def make_walls(self):
         floor = "floor_"+str(self.props.floor)
@@ -108,7 +106,7 @@ class Door(Tile):
     def activate(self):
         lerp = LerpFunc(
             self.open_door, fromData=1, 
-            toData=0, duration=0.25,
+            toData=0, duration=1,
         )
         base.sequence_player.add_to_sequence(lerp)
         base.sequence_player.finalize()

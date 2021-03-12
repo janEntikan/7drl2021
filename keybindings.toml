@@ -24,7 +24,7 @@
   keyboard = "c"
 
   [ew.aim]
-  _type = "button"
+  _type = "trigger"
   _device_order = ["gamepad", "keyboard"]
   gamepad = "face_x"
   keyboard = "x"

@@ -27,15 +27,17 @@ class Interface(): # takes care of player logic and ai response
                     if round(ex) == x and round(ey) == -y:
                         return
                 destination_tile = base.map.tiles[x, y]
+                for item in base.map.items:
+                    if item.model.get_pos() == new_pos:
+                        item.activate()
+
                 if destination_tile.char in "#P":
                     return
                 elif destination_tile.char == "=":
                     if not destination_tile.open:
                         base.sound.play("door")
                         destination_tile.activate()
-                        return
-                
-
+                        return                
                 base.sound.play("step")
                 player.animate("walk", True)
                 player.move_to(new_pos)
@@ -178,13 +180,14 @@ class Player(Creature):
                 p2.y = round(p2.y)
                 vector = p1 - p2
                 enemy.distance = vector.get_xy().length()
-                if enemy.distance < 30:
-                    if base.map.scan(p1, p2, vector):
-                        visable.append(enemy)
-                        enemy.root.show()
-                        enemy.last_seen = self.root.get_pos()
-                    else:
-                        enemy.root.hide()
+                if enemy.distance < 50:
+                    if enemy.distance < 5:
+                        if base.map.scan(p1, p2, vector):
+                            visable.append(enemy)
+                            enemy.root.show()
+                            enemy.last_seen = self.root.get_pos()
+                        else:
+                            enemy.root.hide()
                 else:
                     base.map.enemies.remove(enemy)
                     enemy.detach()
@@ -342,7 +345,7 @@ class Slug(Enemy):
             pos,
         )
         self.root.set_scale(uniform(0.5,0.9))
-        self.hp = 2
+        self.hp = 3
         self.speed = 4
 
         self.hurtsound = "woo3"

@@ -40,10 +40,16 @@ class Room():
 
     def construct(self):
         if base.map.current_room.is_end:
+            base.map.tile_set = base.map.tile_sets[base.map.sets[5]]
             self.generate_ending()
         else:
             self.generate()
             self.make_doors()
+            self.make_props()
+            self.sprinkle_enemies()
+            if base.map.current_room.is_dead_end:
+                if base.player.hp < 2:
+                    Healthpack(self.get_empty())
         self.set_neighbors()
         self.finalize()
 
@@ -85,10 +91,9 @@ class Room():
 
     def draw(self, x, y, char):
         if base.map.current_room.is_end:
-            base.map.tiles[x,y] = Ending(self.props, [x, y], char)
+            t = base.map.tiles[x,y] = Ending(self.props, [x, y], char)
         else:
-            base.map.tiles[x,y] = Tile(self.props, [x, y], char)
-            self.add_enemies(x, y)
+            t = base.map.tiles[x,y] = Tile(self.props, [x, y], char)
 
     def draw_line(self, x1, y1, x2, y2, char):
         while True:
@@ -105,6 +110,35 @@ class Room():
                 if randint(0,chance):
                     rx, ry = rect[0]+x, rect[1]+y
                     self.draw(rx, ry, " ")
+
+    def make_props(self):
+        for x in range(self.rect[2]):
+            for y in range(self.rect[3]):
+                rx = self.rect[0]+x
+                ry = self.rect[1]+y
+                if self.is_prop_spot(rx,ry):
+                    if rx%2 and ry%2:
+                        base.map.tiles[rx,ry].char = "P"
+
+    def is_prop_spot(self, x, y):
+        for d in DIRS:
+            if base.map.tiles[x-d[0], y-d[1]].char == "#":
+                return False
+        return True
+
+    def sprinkle_enemies(self):
+        max_enemies = int(((base.map.rooms_visited)+randint(-2,2))*0.15)+1
+        print(max_enemies)
+        for i in range(max_enemies):
+            self.add_enemies(*self.get_empty())
+
+    def get_empty(self):
+        while True:
+            rx = randint(self.rect[0]+2,self.rect[0]+self.rect[2]-3)
+            ry = randint(self.rect[1]+2,self.rect[1]+self.rect[3]-3)
+            t = base.map.tiles[rx, ry]
+            if t.char == " ":
+                return rx, ry
 
     def generate(self):
         self.connect_doors()
@@ -137,24 +171,23 @@ class Room():
             return
         if base.map.current_room.is_end:
             return
-        max_enemies = (base.map.rooms_visited*0.2)
-        if self.enemies > max_enemies:
-            return
-        if not randint(0,5):
-            self.enemies += 1
-            if base.map.current_set < 2:
-                enemy_level = 0
-            else:
+
+        self.enemies += 1
+        if base.map.current_set < 2:
+            enemy_level = 0
+        else:
+            enemy_level = base.map.current_set
+        r = randint(0,3)
+        if enemy_level > 0 and not r:
+            enemy_level -= 1
+        elif enemy_level < len(base.map.enemy_types) and not r:
+            enemy_level += 1 + randint(0,1)
+            if enemy_level >= len(base.map.enemy_types):
                 enemy_level = base.map.current_set
-            r = randint(0,3)
-            if enemy_level > 0 and not r:
-                enemy_level -= 1
-            elif enemy_level < len(base.map.enemy_types) and not r:
-                enemy_level += 1
-            Enemy = base.map.enemy_types[enemy_level]
-            w = Enemy((x, -y, 0))
-            w.root.hide()
-            base.map.enemies.append(w)
+        Enemy = base.map.enemy_types[enemy_level]
+        w = Enemy((x, -y, 0))
+        w.root.hide()
+        base.map.enemies.append(w)
 
     def finalize(self):
         for y in range(self.rect[3]):
@@ -186,9 +219,7 @@ class Map(Maze):
         ]
         self.rooms_per_level = 5
         self.total_rooms = (len(self.sets)*self.rooms_per_level)+1
-        print(self.total_rooms)
         Maze.__init__(self, self.total_rooms)
-        print(len(self._rooms))
         self.tile_sets = {}
         for set in self.sets:
             self.tile_sets[set] = self.load_tile_set(set)
@@ -202,6 +233,7 @@ class Map(Maze):
 
     def new_game(self):
         Maze.__init__(self, self.total_rooms)
+        self.items = []
         self.tiles = defaultdict(Tile)
         self.root = render.attach_new_node("map_root")
         self.static = self.root.attach_new_node("map-static")
