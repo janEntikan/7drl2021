@@ -14,6 +14,8 @@ class Interface(): # takes care of player logic and ai response
             current = player.root.get_pos()
             new_pos = None
             time = base.turn_speed
+            if context["aim"]:
+                player.next_aim()
             if int(context["move"].x):         
                 new_pos = Vec3(current.x+int(context["move"].x), current.y, 0)
             elif int(context["move"].y):
@@ -32,6 +34,8 @@ class Interface(): # takes care of player logic and ai response
                         base.sound.play("door")
                         destination_tile.activate()
                         return
+                
+
                 base.sound.play("step")
                 player.animate("walk", True)
                 player.move_to(new_pos)
@@ -52,6 +56,7 @@ class Interface(): # takes care of player logic and ai response
             for enemy in base.map.enemies:
                 enemy.update()
             base.sequence_player.finalize()
+            player.aim()
         else:
             for enemy in base.map.enemies:
                 enemy.reset()
@@ -112,12 +117,14 @@ class Player(Creature):
             pass
 
     def color(self):
+        hair = self.root.find("**/hair")
+        hair.clear_color()
         chest = self.root.find("**/torso")
-        chest.set_color((0,0.1,0.1,1))
+        chest.set_color((0.1,0.4,0.1,1))
         legs = self.root.find("**/legs")
         legs.set_color((0.02,0.02,0.02,1))
         #arms = self.root.find("**/arms")
-        #arms.set_color((0.1,0.1,0.1,1))
+        #arms.set_color((0.1,0.2,0,1))
 
     def hurt_hand(self):
         base.hudgun.find("**/hand_healthy").hide()
@@ -148,7 +155,6 @@ class Player(Creature):
         base.sequence_player.hold(1)
 
     def end(self, pos):
-        print("ending!")
         movement = self.root.posInterval(
             5, pos, startPos=self.root.get_pos()
         )
@@ -165,31 +171,40 @@ class Player(Creature):
     def aim(self):
         visable = []
         for enemy in base.map.enemies:
-            p1 = self.root.get_pos()
-            p2 = enemy.root.get_pos()
-            vector = p1 - p2
-            enemy.distance = vector.get_xy().length()
-            if enemy.distance < 50:
-                if base.map.scan(p1, p2, vector):
-                    visable.append(enemy)
-                    enemy.root.show()
-                    enemy.last_seen = self.root.get_pos()
+            if enemy.alive:
+                p1 = self.root.get_pos()
+                p2 = enemy.root.get_pos()
+                p2.x = round(p2.x)
+                p2.y = round(p2.y)
+                vector = p1 - p2
+                enemy.distance = vector.get_xy().length()
+                if enemy.distance < 30:
+                    if base.map.scan(p1, p2, vector):
+                        visable.append(enemy)
+                        enemy.root.show()
+                        enemy.last_seen = self.root.get_pos()
+                    else:
+                        enemy.root.hide()
                 else:
-                    enemy.root.hide()
-            else:
-                base.map.enemies.remove(enemy)
-                enemy.detach()
+                    base.map.enemies.remove(enemy)
+                    enemy.detach()
         base.map.enemies.sort(key=lambda x: x.distance, reverse=False)
-        try:
+
+        if len(visable) > 0:
+            if self.aim_select >= len(visable):
+                self.aim_select = 0
             self.aimed = visable[self.aim_select]
             self.crosshair.reparent_to(self.aimed.root)
             self.crosshair.set_scale(render, 0.5)
-
             self.crosshair.set_z(0.01)
             self.crosshair.show()
-        except:
+        else:
             self.crosshair.hide()
             self.aimed = None
+
+    def next_aim(self):
+        self.aim_select += 1
+        self.aim()
 
     def reload(self, bullet):
         self.weapon.next_bullet = bullet
@@ -278,8 +293,7 @@ class Enemy(Creature):
             base.map.enemies.remove(self)
             base.task_mgr.doMethodLater(3, self.detach, "ok")
             return
-
-        if self.distance <= 1.0:
+        if self.distance <= 1:
             self.attack()
             return
         if randint(0,self.speed):

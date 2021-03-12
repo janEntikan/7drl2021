@@ -184,7 +184,7 @@ class Map(Maze):
             "quarters",
             "bridge",
         ]
-        self.rooms_per_level = 1
+        self.rooms_per_level = 5
         self.total_rooms = (len(self.sets)*self.rooms_per_level)+1
         print(self.total_rooms)
         Maze.__init__(self, self.total_rooms)
