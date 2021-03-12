@@ -7,11 +7,10 @@ from items import *
 
 
 class Interface(): # takes care of player logic and ai response
-    def update(self):
+    def update(self, context):
         player = base.player
         turn_over = False
         if player.alive:
-            context = base.device_listener.read_context('ew')
             current = player.root.get_pos()
             new_pos = None
             time = base.turn_speed
@@ -102,7 +101,15 @@ class Player(Creature):
         self.hp = 2
         self.aim_select = 0
         self.aimed = None
+        self.alive = True
         self.weapon.clip = [0,0]
+        self.animate("idle",True)
+        try:
+            base.hudgun.find("**/hand_healthy").show()
+            base.hudgun.find("**/hand_hurt").hide()
+            self.weapon.set_hud_bullets()
+        except:
+            pass
 
     def color(self):
         chest = self.root.find("**/torso")
@@ -133,7 +140,7 @@ class Player(Creature):
             base.sequence_player.add_to_sequence(
                 Sequence(
                     Wait(0.2+delay),
-
+                    Func(base.game_over),
                     Func(self.root.play, "die"),
                     Func(self.root.look_at, attacker.root),
                 )
@@ -237,7 +244,7 @@ class Enemy(Creature):
         if self.alive:
             self.stop()
 
-    def detach(self, task):
+    def detach(self, task=None):
         self.root.detach_node()
 
     def attack(self):

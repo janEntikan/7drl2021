@@ -1,3 +1,5 @@
+from panda3d.core import LightRampAttrib
+
 from random import randint, uniform, choice
 from collections import defaultdict
 from direct.actor.Actor import Actor
@@ -83,7 +85,6 @@ class Room():
         self.add_enemies(x, y)
 
     def draw_line(self, x1, y1, x2, y2, char):
-        #self.draw(x1, y1, char)
         while True:
             if   x1 < x2: x1 += 1
             elif x1 > x2: x1 -= 1
@@ -158,15 +159,15 @@ class Map(Maze):
             "bridge",
         ]
         self.enemy_types = [Worm,Slug,Blob,Centipede,Jelly]
-        self.current_set = 0
         self.tile_sets = {}
         for set in self.sets:
             self.tile_sets[set] = self.load_tile_set(set)
-        self.tile_set = self.tile_sets[self.sets[self.current_set]]
 
     def destroy(self):
         for node in self.root, self.static, self.unlit, self.backsides, self.dynamic:
             node.detach_node()
+        for enemy in self.enemies:
+            enemy.detach()
 
     def new_game(self):
         self.tiles = defaultdict(Tile)
@@ -175,14 +176,31 @@ class Map(Maze):
         self.unlit = render.attach_new_node("map-unlit")
         self.backsides = self.root.attach_new_node("map-backsides")
         self.dynamic = render.attach_new_node("map-dynamic")
-
         self.enemies = []
         self.rooms = {}
         self.rooms_visited = 0
+        self.current_set = 0
+        self.tile_set = self.tile_sets[self.sets[self.current_set]]
+        self.dynamic.hide(0b001)
+        base.player.root.hide(0b001)
+        for target_np in [
+            self.static,
+            self.backsides,
+            self.unlit,
+            self.dynamic,
+        ]:
+            target_np.set_attrib(
+                LightRampAttrib.make_single_threshold(0.0, 1.0)
+            )
+            target_np.set_light(base.fov_point_np)
+        base.fov_point_np.reparent_to(base.player.root)
+        base.fov_point.set_scene(self.root)
+
         p = self.pos(8)
         self.rooms[p] = Room(*p)
         base.player.root.set_pos((p[0]+4,-p[1]-4,0))
         base.player.reset()      
+
 
     def pos(self, size):
         return self.current_room.x*8, self.current_room.y*8
@@ -207,7 +225,7 @@ class Map(Maze):
         self.move(direction)
         if not self.current_room.is_dead_end:
             self.rooms_visited += 1
-        if self.rooms_visited%3 == 0:
+        if self.rooms_visited%1 == 0:
             self.current_set += 1
             self.tile_set = self.tile_sets[self.sets[self.current_set]]
 
