@@ -345,7 +345,7 @@ class Slug(Enemy):
             pos,
         )
         self.root.set_scale(uniform(0.5,0.9))
-        self.hp = 3
+        self.hp = 2
         self.speed = 4
 
         self.hurtsound = "woo3"

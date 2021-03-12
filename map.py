@@ -19,12 +19,6 @@ OPPOSITE = {
 
 
 
-class Props():
-    def __init__(self):
-        self.floor = randint(0,3)
-        self.wall = randint(0,2)
-        self.prop = randint(0,2)
-        self.prop_angle = randint(0,3)
 
 
 class Room():
@@ -127,8 +121,7 @@ class Room():
         return True
 
     def sprinkle_enemies(self):
-        max_enemies = int(((base.map.rooms_visited)+randint(-2,2))*0.15)+1
-        print(max_enemies)
+        max_enemies = int(((base.map.rooms_visited))*0.2)+randint(0,2)
         for i in range(max_enemies):
             self.add_enemies(*self.get_empty())
 
@@ -217,7 +210,7 @@ class Map(Maze):
             "quarters",
             "bridge",
         ]
-        self.rooms_per_level = 5
+        self.rooms_per_level = 3
         self.total_rooms = (len(self.sets)*self.rooms_per_level)+1
         Maze.__init__(self, self.total_rooms)
         self.tile_sets = {}

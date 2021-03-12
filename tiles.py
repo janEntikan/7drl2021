@@ -15,10 +15,19 @@ PROP_SPOT = [
 ]
 
 
+class Props():
+    def __init__(self):
+        self.floor = randint(0,3)
+        self.wall = randint(0,2)
+        self.prop = randint(0,2)
+        self.prop_angle = randint(0,3)
+
 
 class Tile():
     def __init__(self, props=None, pos=(0,0), char="#"):
         self.props = props
+        if not self.props:
+            self.props = Props()
         self.made = False
         self.pos = pos
         self.root = NodePath("tile")
@@ -86,8 +95,6 @@ class Ending(Tile):
                 w.set_h(heading)
                 l = base.map.tile_set["light"].copy_to(self.unlit)
                 l.set_h(heading) 
-
-
 
 class Door(Tile):
     def __init__(self, props, pos, direction):
