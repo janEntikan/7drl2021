@@ -188,6 +188,7 @@ class Map(Maze):
         self.total_rooms = (len(self.sets)*self.rooms_per_level)+1
         print(self.total_rooms)
         Maze.__init__(self, self.total_rooms)
+        print(len(self._rooms))
         self.tile_sets = {}
         for set in self.sets:
             self.tile_sets[set] = self.load_tile_set(set)
@@ -200,6 +201,7 @@ class Map(Maze):
             enemy.detach()
 
     def new_game(self):
+        Maze.__init__(self, self.total_rooms)
         self.tiles = defaultdict(Tile)
         self.root = render.attach_new_node("map_root")
         self.static = self.root.attach_new_node("map-static")
@@ -259,6 +261,7 @@ class Map(Maze):
                 self.current_set += 1
                 self.tile_set = self.tile_sets[self.sets[self.current_set]]
 
+        print("visited:", self.rooms_visited)
         p = self.pos(8)
         if not p in self.rooms:
             self.rooms[p] = Room(*p)

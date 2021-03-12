@@ -97,6 +97,8 @@ class Weapon():
 
     def reload(self):
         if self.clip[0] > 0:
+            if self.clip[1] > 0:
+                self.clip[0] = self.clip[1]
             self.clip[1] = self.next_bullet+1
         else:
             self.clip[0] = self.next_bullet+1

@@ -80,7 +80,7 @@ class Texts():
         text.set_font(font)
         text.set_align(2)
         text.set_text_color((0,0,0,1))
-        text.set_shadow(0.05,0.05)
+        text.set_shadow(0.1,0.1)
         text.set_shadow_color(color)
         text.text = text_string
         text_np = root.attach_new_node(text)

@@ -192,15 +192,12 @@ class Player(Creature):
             self.aimed = None
 
     def reload(self, bullet):
-        if self.weapon.clip[0] == 0 or self.weapon.clip[1] == 0:
-            self.weapon.next_bullet = bullet
-            self.weapon.reload()
-            base.sound.play("reload")
-            self.animate("reload", False)
-            base.sequence_player.hold(0.6)
-            return True
-        else:
-            return False
+        self.weapon.next_bullet = bullet
+        self.weapon.reload()
+        base.sound.play("reload")
+        self.animate("reload", False)
+        base.sequence_player.hold(0.6)
+        return True
 
     def fire(self):
         if self.aimed:
