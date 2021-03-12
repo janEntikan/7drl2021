@@ -116,6 +116,8 @@ class Room():
 
     def is_prop_spot(self, x, y):
         for d in DIRS:
+            if not base.map.tiles[x,y].char == " ":
+                return False
             if base.map.tiles[x-d[0], y-d[1]].char == "#":
                 return False
         return True

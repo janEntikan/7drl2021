@@ -68,7 +68,7 @@ class Texts():
             self.next_tips = self.tips
             shuffle(self.next_tips)
         tip.set_scale(0.16)
-        tip.set_z(-1.8)
+        tip.set_z(-2)
 
     def make_title(self):
         self.text = self.root.attach_new_node("title")
@@ -82,12 +82,12 @@ class Texts():
         title.set_scale(0.5)
         start = self.make_textnode(self.text, "Press FIRE to start")
         start.set_scale(0.17)
-        start.set_z(-0.3)
+        start.set_z(-0.4)
         credit = self.make_textnode(self.text, "special thanks to:\nschwarzbaer rdb tizilogic")
         credit.set_scale(0.17)
         credit.node().set_align(3)
         credit.set_z(-2)
-        credit.set_x(-2.75)
+        credit.set_x(-2.70)
 
     def make_textnode(self, root, text_string, color=(1,1,1,1), title=False):
         if title:

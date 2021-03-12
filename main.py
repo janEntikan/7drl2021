@@ -35,7 +35,7 @@ from creature import Interface, Player
 
 
 load_prc_file(
-    Filename.expand_from('$MAIN_DIR/config.prc')
+    Filename.expand_from('$MAIN_DIR/settings.prc')
 )
 
 

@@ -25,7 +25,10 @@ class Props():
 
 class Tile():
     def __init__(self, props=None, pos=(0,0), char="#"):
-        self.props = props
+        if not props:
+            self.props = Props()
+        else:
+            self.props = props
         self.made = False
         self.pos = pos
         self.root = NodePath("tile")
@@ -42,7 +45,7 @@ class Tile():
             x = self.pos[0]+dir[0]
             y = self.pos[1]+dir[1]
             tile = base.map.tiles[x,y]
-            if tile.char == "#":
+            if tile.char in "#":
                 self.access[d] = False
 
     def add_prop(self):
@@ -56,7 +59,10 @@ class Tile():
             self.add_prop()
 
     def make_walls(self):
-        floor = "floor_"+str(self.props.floor)
+        if not self.props:
+            floor = "floor_0"
+        else:
+            floor = "floor_"+str(self.props.floor)
         f = base.map.tile_set[floor].copy_to(self.unlit)
         light = self.pos[0]%2 == 1 and self.pos[1]%2 == 1
         for angle, access in enumerate(self.access):
