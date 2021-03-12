@@ -1,15 +1,12 @@
-#version 130
+#version 120
 
 uniform float osg_FrameTime;
 uniform sampler2D p3d_Texture0;
 uniform sampler2D pattern;
 uniform vec2 iResolution;
 
-in vec4 vtx_color;
-in vec2 texcoord;
-
-out vec4 color;
-
+varying vec4 vtx_color;
+varying vec2 texcoord;
 
 
 
@@ -83,6 +80,6 @@ void main()
     tmp_color += texture2D(p3d_Texture0, uv).rgb * 0.2;
     tmp_color = DrawVignette( tmp_color, uv );
 
-	color 	= vec4( tmp_color, 1.0 );
+	gl_FragColor = vec4( tmp_color, 1.0 );
     //gl_FragColor.w		= 1.0;
 }

@@ -1,12 +1,12 @@
-#version 130
+#version 120
 // Exactly nothing happens in vertex shading.
 
-in vec4 p3d_Vertex;
+attribute vec4 p3d_Vertex;
 uniform mat4 p3d_ModelViewProjectionMatrix;
-in vec4 p3d_Color;
+attribute vec4 p3d_Color;
 
-out vec4 vtx_color;
-out vec2 texcoord;
+varying vec4 vtx_color;
+varying vec2 texcoord;
 
 void main()  {
   texcoord = p3d_Vertex.xz / 2.0 + 0.5;;
