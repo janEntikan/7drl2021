@@ -3,10 +3,11 @@ class SoundManager():
         self.sounds = {}
         self.load()
         self.music = {
-            "background":loader.load_sfx("assets/music/background.ogg")
+            "background":loader.load_sfx("assets/music/background.ogg"),
+            "opening":loader.load_sfx("assets/music/opening.ogg")
         }
         self.music["background"].setLoop(True)
-        self.music["background"].play()
+        self.music["opening"].play()
 
     def load(self):
         sounds = [
@@ -20,3 +21,6 @@ class SoundManager():
 
     def play(self, name):
         self.sounds[name].play()
+
+    def stop(self, name):
+        self.sounds[name].stop()
