@@ -33,7 +33,7 @@ vec3 DrawVignette( vec3 color, vec2 uv )
 {
     float vignette = uv.x * uv.y * ( 1.0 - uv.x ) * ( 1.0 - uv.y );
     vignette = clamp( pow( 16.0 * vignette, 0.3 ), 0.0, 1.0 );
-    color *= vignette;
+    color *= vignette * vignette * vignette;
     return color;
 }
 
@@ -76,12 +76,12 @@ void main()
     {
         tmp_color = vec3( 0.0 );
     }
-    tmp_color = DrawVignette( tmp_color, uv );
     //tmp_color = DrawScanline( tmp_color, uv );
 
     tmp_color *= pat * 0.7;
 
     tmp_color += texture2D(p3d_Texture0, uv).rgb * 0.2;
+    tmp_color = DrawVignette( tmp_color, uv );
 
 	color 	= vec4( tmp_color, 1.0 );
     //gl_FragColor.w		= 1.0;
