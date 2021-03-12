@@ -147,6 +147,21 @@ class Player(Creature):
             )
         base.sequence_player.hold(1)
 
+    def end(self, pos):
+        print("ending!")
+        movement = self.root.posInterval(
+            5, pos, startPos=self.root.get_pos()
+        )
+        base.sequence_player.add_to_sequence(
+            Sequence(
+                movement,
+                Func(base.win_game),
+                Func(self.root.play, "idle"),
+            )
+        )
+        base.sequence_player.finalize()
+        self.alive = False
+
     def aim(self):
         visable = []
         for enemy in base.map.enemies:

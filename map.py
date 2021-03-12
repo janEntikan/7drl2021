@@ -39,8 +39,11 @@ class Room():
         self.construct()
 
     def construct(self):
-        self.generate()
-        self.make_doors()
+        if base.map.current_room.is_end:
+            self.generate_ending()
+        else:
+            self.generate()
+            self.make_doors()
         self.set_neighbors()
         self.finalize()
 
@@ -81,8 +84,11 @@ class Room():
             self.draw_line(x,y,w,h," ")
 
     def draw(self, x, y, char):
-        base.map.tiles[x,y] = Tile(self.props, [x, y], char)
-        self.add_enemies(x, y)
+        if base.map.current_room.is_end:
+            base.map.tiles[x,y] = Ending(self.props, [x, y], char)
+        else:
+            base.map.tiles[x,y] = Tile(self.props, [x, y], char)
+            self.add_enemies(x, y)
 
     def draw_line(self, x1, y1, x2, y2, char):
         while True:
@@ -109,7 +115,28 @@ class Room():
         y += (self.rect[3]//2)-(h//2)
         self.draw_square((x,y,w,h))
 
+    def generate_ending(self):
+        self.connect_doors()
+        x, y, w, h = self.rect
+        w -= 4
+        h -= 4
+        x += 2
+        y += 2
+        self.draw_square((x,y,w,h),10000)       
+        center = render.attach_new_node("center")
+        p = base.map.tile_set["wall_prop_0"].copy_to(center)
+        center.set_pos((x+2,-(y+2),0))
+        d = "nesw".index(base.map.doors[0])
+        center.set_h(-((d-1)*90))
+
+        base.player.end(p.get_pos(render))
+        
+
     def add_enemies(self, x, y):
+        if base.map.rooms_visited == 0:
+            return
+        if base.map.current_room.is_end:
+            return
         max_enemies = (base.map.rooms_visited*0.2)
         if self.enemies > max_enemies:
             return
@@ -149,7 +176,6 @@ class Room():
 
 class Map(Maze):
     def __init__(self):
-        Maze.__init__(self, 32)
         self.sets = [
             "mine",
             "engineering",
@@ -158,10 +184,14 @@ class Map(Maze):
             "quarters",
             "bridge",
         ]
-        self.enemy_types = [Worm,Slug,Blob,Centipede,Jelly]
+        self.rooms_per_level = 1
+        self.total_rooms = (len(self.sets)*self.rooms_per_level)+1
+        print(self.total_rooms)
+        Maze.__init__(self, self.total_rooms)
         self.tile_sets = {}
         for set in self.sets:
             self.tile_sets[set] = self.load_tile_set(set)
+        self.enemy_types = [Worm,Slug,Blob,Centipede,Jelly]
 
     def destroy(self):
         for node in self.root, self.static, self.unlit, self.backsides, self.dynamic:
@@ -225,9 +255,9 @@ class Map(Maze):
         self.move(direction)
         if not self.current_room.is_dead_end:
             self.rooms_visited += 1
-        if self.rooms_visited%1 == 0:
-            self.current_set += 1
-            self.tile_set = self.tile_sets[self.sets[self.current_set]]
+            if self.rooms_visited%self.rooms_per_level == 0:
+                self.current_set += 1
+                self.tile_set = self.tile_sets[self.sets[self.current_set]]
 
         p = self.pos(8)
         if not p in self.rooms:

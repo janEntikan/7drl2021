@@ -29,3 +29,7 @@
   gamepad = "face_x"
   keyboard = "x"
 
+  [ew.quit]
+  _type = "button"
+  _device_order = ["keyboard"]
+  keyboard = "escape"

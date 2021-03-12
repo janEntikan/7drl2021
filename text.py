@@ -35,7 +35,7 @@ class Texts():
             "ONLY JUST BEGIN!\n\n\n"
             "THE END\n\n"
             "THANKS FOR PLAYING",
-            (1,1,0.15,1),
+            (0.1,0.1,0.5,1),
         )
         start.set_scale(0.20)
         start.set_z(1.5)

@@ -52,16 +52,11 @@ class Tile():
 
     def make_walls(self):
         floor = "floor_"+str(self.props.floor)
-        if not floor in base.map.tile_set:
-            floor = "floor__0"
         f = base.map.tile_set[floor].copy_to(self.unlit)
-
         light = self.pos[0]%2 == 1 and self.pos[1]%2 == 1
         for angle, access in enumerate(self.access):
             if not access:
                 wall_type = "wall_"+str(self.props.wall)
-                if not wall_type in base.map.tile_set:
-                    wall_type = "wall_0"
                 w = base.map.tile_set[wall_type].copy_to(self.root)
                 heading = (angle+1)*90 
                 w.set_h(heading)
@@ -75,6 +70,26 @@ class Tile():
                         l.set_h(heading)                        
                     except:
                         pass
+
+class Ending(Tile):
+    def __init__(self, props, pos, direction):
+        Tile.__init__(self, props, pos, char="e")
+
+    def make_mesh(self):
+        self.make_walls()
+
+    def make_walls(self):
+        f = base.map.tile_set["floor_0"].copy_to(self.unlit)
+        light = self.pos[0]%2 == 1 and self.pos[1]%2 == 1
+        for angle, access in enumerate(self.access):
+            if not access:
+                w = base.map.tile_set[ "wall_0"].copy_to(self.root)
+                heading = (angle+1)*90 
+                w.set_h(heading)
+                l = base.map.tile_set["light"].copy_to(self.unlit)
+                l.set_h(heading) 
+
+
 
 class Door(Tile):
     def __init__(self, props, pos, direction):

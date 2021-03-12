@@ -1,3 +1,4 @@
+import sys
 from direct.showbase.ShowBase import ShowBase
 from direct.showbase.Transitions import Transitions
 from direct.interval.IntervalGlobal import Sequence
@@ -112,6 +113,7 @@ class Base(ShowBase):
         self.texts = Texts(camera)
         self.pause = True
         self.gameover = False
+        self.won = False
 
         self.player = Player((0,0,0))
         self.map = Map()
@@ -139,10 +141,14 @@ class Base(ShowBase):
         self.setup_post_effect()
 
     def game_over(self):
-        print("gameover")
         self.pause = True
         self.gameover = True
         self.texts.make_gameover()
+
+    def win_game(self):
+        self.pause = True
+        self.won = True
+        self.texts.make_end()
 
     def innitialize_fov(self):
         render.set_shader_auto()
@@ -203,10 +209,14 @@ class Base(ShowBase):
     def update(self, task):
         self.dt = globalClock.get_dt()
         context = base.device_listener.read_context('ew')
+        if context["quit"]:
+            sys.exit()
         if not self.pause:
             if not self.sequence_player.parallel:
                 self.interface.update(context)
         else:
+            if self.won:
+                return task.cont
             if context["select"]:
                 self.texts.deactivate()
                 self.pause = False
