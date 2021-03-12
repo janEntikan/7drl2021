@@ -30,6 +30,7 @@ class Room():
         self.unlit = base.map.unlit.attach_new_node("room")
         self.backsides = base.map.backsides.attach_new_node("room")
         self.enemies = 0
+        self.color = randint(0,1)
         self.construct()
 
     def construct(self):
@@ -173,7 +174,9 @@ class Room():
         if enemy_level >= len(base.map.enemy_types): enemy_level = len(base.map.enemy_types)-1
         if base.map.current_set < 1: enemy_level = 0
         Enemy = base.map.enemy_types[enemy_level]
-        w = Enemy((x, -y, 0))
+        w = Enemy((x, -y, 0), self.color)
+        if randint(0,1):
+            self.color = not self.color
         w.root.hide()
         base.map.enemies.append(w)
 

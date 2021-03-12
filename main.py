@@ -119,6 +119,7 @@ class Base(ShowBase):
 
         self.texts = Texts(camera)
         self.pause = True
+        self.instruct = True
         self.gameover = False
         self.won = False
 
@@ -229,7 +230,11 @@ class Base(ShowBase):
 
             if context["select"]:
                 self.texts.deactivate()
-                self.pause = False
+                if self.instruct:
+                    self.instruct = False
+                    self.texts.make_instructions()
+                else:
+                    self.pause = False
                 if self.gameover:
                     base.sound.stop("die")
                     self.gameover = False

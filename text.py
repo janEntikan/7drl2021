@@ -33,6 +33,22 @@ class Texts():
     def deactivate(self):
         self.text.detach_node()
 
+    def make_instructions(self):
+        self.text = self.root.attach_new_node("instructions")
+        text = self.make_textnode(self.text,
+            "Your rifle can hold two bullets.\n"
+            "Load a CYAN bullet with C\n"
+            "Load a VIOLET bullet with V\n"
+            "X to scroll targets\n"
+            "Space to fire\n"
+            "Find a way out!\n\n"
+            "FIRE to continue!"
+        )
+        text.set_scale(0.17)
+        text.node().set_align(3)
+        text.set_z(2)
+        text.set_x(-2.70)
+
     def make_end(self):
         self.text = self.root.attach_new_node("end")
         start = self.make_textnode(self.text,
@@ -81,7 +97,7 @@ class Texts():
         )
         title.set_z(1)
         title.set_scale(0.5)
-        start = self.make_textnode(self.text, "Press FIRE to start")
+        start = self.make_textnode(self.text, "Press SPACE to start")
         start.set_scale(0.16)
         start.set_z(-0.4)
         credit = self.make_textnode(self.text, "special thanks to:\nschwarzbaer rdb tizilogic")

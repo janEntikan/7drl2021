@@ -251,9 +251,10 @@ class Player(Creature):
 
 
 class Enemy(Creature):
-    def __init__(self, name, model, pos):
+    def __init__(self, name, model, pos, color):
         Creature.__init__(self, name, model, pos)
         self.color = randint(0,1)
+        self.color = color
         l = self.root.find("**/l")
         d = self.root.find("**/d")
         if self.color == 0:
@@ -331,11 +332,12 @@ class Enemy(Creature):
             self.wait = False
 
 class Worm(Enemy):
-    def __init__(self, pos):
+    def __init__(self, pos, color):
         Enemy.__init__(
             self, "worm",
             Actor("assets/models/creatures/worm.bam"),
             pos,
+            color
         )
         self.root.set_scale(uniform(0.5,0.9))
         self.hp = 1
@@ -348,11 +350,12 @@ class Worm(Enemy):
 
 
 class Slug(Enemy):
-    def __init__(self, pos):
+    def __init__(self, pos, color):
         Enemy.__init__(
             self, "slug",
             Actor("assets/models/creatures/slug.bam"),
             pos,
+            color,
         )
         self.root.set_scale(uniform(0.5,0.9))
         self.hp = 3
@@ -365,11 +368,12 @@ class Slug(Enemy):
 
 
 class Centipede(Enemy):
-    def __init__(self, pos):
+    def __init__(self, pos, color):
         Enemy.__init__(
             self, "centipede",
             Actor("assets/models/creatures/centipede.bam"),
             pos,
+            color
         )
         self.root.set_scale(uniform(0.6,0.9))
         self.speed = 2
@@ -382,11 +386,12 @@ class Centipede(Enemy):
 
 
 class Blob(Enemy):
-    def __init__(self, pos):
+    def __init__(self, pos, color):
         Enemy.__init__(
             self, "blob",
             Actor("assets/models/creatures/blob.bam"),
             pos,
+            color
         )
         self.root.set_scale(uniform(0.05,0.2))
         self.hp = 1
@@ -398,11 +403,12 @@ class Blob(Enemy):
 
 
 class Jelly(Enemy):
-    def __init__(self, pos):
+    def __init__(self, pos, color):
         Enemy.__init__(
             self, "jelly",
             Actor("assets/models/creatures/jelly.bam"),
             pos,
+            color
         )
         self.root.set_scale(uniform(0.5,0.9))
         self.hp = 3
