@@ -25,9 +25,11 @@ from panda3d.core import SamplerState
 from panda3d.core import DepthOffsetAttrib
 from panda3d.core import LightRampAttrib
 
+
 from keybindings.device_listener import add_device_listener
 from keybindings.device_listener import SinglePlayerAssigner
 
+from text import Texts
 from map import Map, Room
 from sound import SoundManager
 from creature import Interface, Player
@@ -107,10 +109,12 @@ class Base(ShowBase):
         card.set_x(-0.25)
         self.camera = camera
         self.load_icons()
+
+        self.texts = Texts(camera)
+
+        self.player = Player((0,0,0))
         self.map = Map()
-        p = self.map.pos(8)
-        self.map.rooms[p] = Room(*p)
-        self.player = Player((p[0]+4,-p[1]-4,0))
+        self.map.new_game()
 
         camera.reparent_to(self.player.root)
         camera.set_pos(4,-4,8)

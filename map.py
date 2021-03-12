@@ -149,15 +149,6 @@ class Room():
 class Map(Maze):
     def __init__(self):
         Maze.__init__(self, 32)
-        self.tiles = defaultdict(Tile)
-        self.root = render.attach_new_node("map_root")
-        self.static = self.root.attach_new_node("map-static")
-        self.unlit = render.attach_new_node("map-unlit")
-        self.backsides = self.root.attach_new_node("map-backsides")
-        self.dynamic = render.attach_new_node("map-dynamic")
-        self.enemies = []
-        self.rooms = {}
-        self.rooms_visited = 0
         self.sets = [
             "mine",
             "engineering",
@@ -172,7 +163,27 @@ class Map(Maze):
         for set in self.sets:
             self.tile_sets[set] = self.load_tile_set(set)
         self.tile_set = self.tile_sets[self.sets[self.current_set]]
-        
+
+    def destroy(self):
+        for node in self.root, self.static, self.unlit, self.backsides, self.dynamic:
+            node.detach_node()
+
+    def new_game(self):
+        self.tiles = defaultdict(Tile)
+        self.root = render.attach_new_node("map_root")
+        self.static = self.root.attach_new_node("map-static")
+        self.unlit = render.attach_new_node("map-unlit")
+        self.backsides = self.root.attach_new_node("map-backsides")
+        self.dynamic = render.attach_new_node("map-dynamic")
+
+        self.enemies = []
+        self.rooms = {}
+        self.rooms_visited = 0
+        p = self.pos(8)
+        self.rooms[p] = Room(*p)
+        base.player.root.set_pos((p[0]+4,-p[1]-4,0))
+        base.player.reset()      
+
     def pos(self, size):
         return self.current_room.x*8, self.current_room.y*8
 

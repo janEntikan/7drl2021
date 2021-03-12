@@ -89,16 +89,20 @@ class Player(Creature):
             Actor("assets/models/creatures/humanoid.bam"),
             pos
         )
-        self.inventory = []
-        self.hp = 2
         self.weapon = Weapon()
         self.weapon.hold(self)
+        self.hp = 2
         self.aim_select = 0
         self.aimed = None
         self.crosshair = base.icons["crosshair"]
         self.crosshair.set_scale(0.5)
         self.color()
-        self.room = 0
+
+    def reset(self):
+        self.hp = 2
+        self.aim_select = 0
+        self.aimed = None
+        self.weapon.clip = [0,0]
 
     def color(self):
         chest = self.root.find("**/torso")
@@ -157,6 +161,8 @@ class Player(Creature):
         try:
             self.aimed = visable[self.aim_select]
             self.crosshair.reparent_to(self.aimed.root)
+            self.crosshair.set_scale(render, 0.5)
+
             self.crosshair.set_z(0.01)
             self.crosshair.show()
         except:
@@ -336,7 +342,7 @@ class Blob(Enemy):
             Actor("assets/models/creatures/blob.bam"),
             pos,
         )
-        self.root.set_scale(uniform(0.2,0.4))
+        self.root.set_scale(uniform(0.05,0.2))
         self.hp = 1
         self.speed = 2
         self.hurtsound = "woo5"
