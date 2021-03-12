@@ -16,13 +16,14 @@ class Texts():
         self.titlefont.set_render_mode(TextFont.RMPolygon)
         self.titlefont.set_point_size(10)
         self.tips = [
-            "Load a cyan bullet with c!",
-            "Switch aim with x!",
-            "Load a violet bullet with v!",
+            "Load a cyan bullet with C!",
+            "Select aim with X!",
+            "Load a violet bullet with V!",
             "Slugs are strong but slow!",
             "Worms are fast but weak!",
             "Cyan bullets kill cyan enemies!",
             "Violet bullets kill violet enemies!",
+            "Can you find the medipacks?",
         ]
         self.next_tips = self.tips[:]
         shuffle(self.next_tips)
@@ -67,8 +68,8 @@ class Texts():
         if len(self.next_tips) == 0:
             self.next_tips = self.tips
             shuffle(self.next_tips)
-        tip.set_scale(0.17)
-        tip.set_z(-2)
+        tip.set_scale(0.16)
+        tip.set_z(-2.2)
 
     def make_title(self):
         self.text = self.root.attach_new_node("title")
@@ -81,7 +82,7 @@ class Texts():
         title.set_z(1)
         title.set_scale(0.5)
         start = self.make_textnode(self.text, "Press FIRE to start")
-        start.set_scale(0.17)
+        start.set_scale(0.16)
         start.set_z(-0.4)
         credit = self.make_textnode(self.text, "special thanks to:\nschwarzbaer rdb tizilogic")
         credit.set_scale(0.17)

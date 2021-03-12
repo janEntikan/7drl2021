@@ -156,7 +156,7 @@ class Room():
         base.player.end(p.get_pos(render))
         
     def sprinkle_enemies(self):
-        max_enemies = int(((base.map.rooms_visited))*0.5)+randint(0,1)
+        max_enemies = int(((base.map.rooms_visited))*uniform(0.4,0.7))+1
         for i in range(max_enemies):
             self.add_enemies(*self.get_empty())
 
@@ -167,17 +167,11 @@ class Room():
             return
 
         self.enemies += 1
-        if base.map.current_set < 2:
-            enemy_level = 0
-        else:
-            enemy_level = base.map.current_set
-        r = randint(0,3)
-        if enemy_level > 0 and not r:
-            enemy_level -= 1
-        elif enemy_level < len(base.map.enemy_types) and not r:
-            enemy_level += 1 + randint(0,1)
-            if enemy_level >= len(base.map.enemy_types):
-                enemy_level = base.map.current_set
+
+        enemy_level = randint(base.map.current_set-2,base.map.current_set+2)
+        if enemy_level < 0: enemy_level = 0
+        if enemy_level >= len(base.map.enemy_types): enemy_level = len(base.map.enemy_types)-1
+        if base.map.current_set < 1: enemy_level = 0
         Enemy = base.map.enemy_types[enemy_level]
         w = Enemy((x, -y, 0))
         w.root.hide()
