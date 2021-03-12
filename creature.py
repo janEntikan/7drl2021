@@ -380,7 +380,7 @@ class Blob(Enemy):
         )
         self.root.set_scale(uniform(0.05,0.2))
         self.hp = 1
-        self.speed = 1
+        self.speed = 2
         self.hurtsound = "woo5"
         self.diesound = "kill3"
         self.attacksound = "woo6"
