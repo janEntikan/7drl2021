@@ -132,12 +132,19 @@ class Player(Creature):
         base.hudgun.find("**/hand_healthy").hide()
         base.hudgun.find("**/hand_hurt").show()
 
+    def oof(self):
+        base.transition.setFadeColor(*(0.2,0,0))
+        base.transition.fadeOut(0)
+        base.transition.fadeIn(0.05)
+
     def hurt(self, amt, attacker, delay):
         self.hp -= amt
         if self.hp > 0:
+
             base.sequence_player.add_to_sequence(
                 Sequence(
                     Wait(0.2+delay),
+                    Func(self.oof),
                     Func(self.root.play, "hurt"),
                     Func(self.root.look_at, attacker.root),
                     Func(self.hurt_hand),
@@ -149,9 +156,11 @@ class Player(Creature):
             base.sequence_player.add_to_sequence(
                 Sequence(
                     Wait(0.2+delay),
+                    Func(self.oof),
                     Func(base.game_over),
                     Func(self.root.play, "die"),
                     Func(self.root.look_at, attacker.root),
+                    Wait(0.5),
                 )
             )
         base.sequence_player.hold(1)

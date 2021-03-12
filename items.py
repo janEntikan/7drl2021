@@ -19,6 +19,10 @@ class Healthpack(Item):
         self.model.set_scale(0.2)
 
     def activate(self):
+        base.transition.setFadeColor(*(0,0.5,0))
+        base.transition.fadeOut(0.1)
+        base.transition.fadeIn(0.1)
+
         base.player.hp = 2
         base.hudgun.find("**/hand_healthy").show()
         base.hudgun.find("**/hand_hurt").hide()
@@ -53,10 +57,19 @@ class Weapon():
         if on: self.muzzle.show()
         else:  self.muzzle.hide()
 
+    def wfoof(self, bullet):
+        if bullet == 1:
+            base.transition.alphaOn.set(0.1, 0, 0.1, 0.05)
+        else:
+            base.transition.alphaOn.set(0, 0.1, 0.1, 0.05)
+        base.transition.fadeOut(0)
+        base.transition.fadeIn(0.05)
+
     def activate(self, user, aimed):
         flash_sequence = Sequence(
             Wait(0.15),
             Func(self.flash, user, True),
+            Func(self.wfoof, self.clip[0]),
             Func(
                 base.linefx.draw_bullet, 
                 self.muzzle,
