@@ -1,5 +1,6 @@
 from panda3d.core import TextNode
 from panda3d.core import TextFont
+from random import choice, shuffle
 
 
 class Texts():
@@ -14,6 +15,17 @@ class Texts():
         self.titlefont.set_pixels_per_unit(10)
         self.titlefont.set_render_mode(TextFont.RMPolygon)
         self.titlefont.set_point_size(10)
+        self.tips = [
+            "Load a cyan bullet with c!",
+            "Switch aim with x!",
+            "Load a violet bullet with v!",
+            "Slugs are strong but slow!",
+            "Worms are fast but weak!",
+            "Cyan bullets kill cyan enemies!",
+            "Violet bullets kill violet enemies!",
+        ]
+        self.next_tips = self.tips[:]
+        shuffle(self.next_tips)
 
         self.make_title()
 
@@ -50,7 +62,13 @@ class Texts():
         start = self.make_textnode(self.text, "Press FIRE to restart")
         start.set_scale(0.17)
         start.set_z(-0.3)
-
+        tip = self.make_textnode(self.text, self.next_tips[0].upper())
+        self.tips = self.next_tips[1:]
+        if len(self.next_tips) == 0:
+            self.next_tips = self.tips
+            shuffle(self.next_tips)
+        tip.set_scale(0.16)
+        tip.set_z(-1.8)
 
     def make_title(self):
         self.text = self.root.attach_new_node("title")

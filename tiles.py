@@ -26,8 +26,6 @@ class Props():
 class Tile():
     def __init__(self, props=None, pos=(0,0), char="#"):
         self.props = props
-        if not self.props:
-            self.props = Props()
         self.made = False
         self.pos = pos
         self.root = NodePath("tile")

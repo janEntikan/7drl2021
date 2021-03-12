@@ -120,11 +120,6 @@ class Room():
                 return False
         return True
 
-    def sprinkle_enemies(self):
-        max_enemies = int(((base.map.rooms_visited))*0.2)+randint(0,2)
-        for i in range(max_enemies):
-            self.add_enemies(*self.get_empty())
-
     def get_empty(self):
         while True:
             rx = randint(self.rect[0]+2,self.rect[0]+self.rect[2]-3)
@@ -158,6 +153,10 @@ class Room():
 
         base.player.end(p.get_pos(render))
         
+    def sprinkle_enemies(self):
+        max_enemies = int(((base.map.rooms_visited))*0.6)+randint(0,2)
+        for i in range(max_enemies):
+            self.add_enemies(*self.get_empty())
 
     def add_enemies(self, x, y):
         if base.map.rooms_visited == 0:
@@ -210,7 +209,7 @@ class Map(Maze):
             "quarters",
             "bridge",
         ]
-        self.rooms_per_level = 3
+        self.rooms_per_level = 2
         self.total_rooms = (len(self.sets)*self.rooms_per_level)+1
         Maze.__init__(self, self.total_rooms)
         self.tile_sets = {}
@@ -285,8 +284,6 @@ class Map(Maze):
             if self.rooms_visited%self.rooms_per_level == 0:
                 self.current_set += 1
                 self.tile_set = self.tile_sets[self.sets[self.current_set]]
-
-        print("visited:", self.rooms_visited)
         p = self.pos(8)
         if not p in self.rooms:
             self.rooms[p] = Room(*p)
