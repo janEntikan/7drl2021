@@ -2,6 +2,7 @@
 
 uniform float osg_FrameTime;
 uniform sampler2D p3d_Texture0;
+uniform sampler2D pattern;
 uniform vec2 iResolution;
 
 in vec4 vtx_color;
@@ -63,14 +64,21 @@ void main()
 
     // CRT effects (curvature, vignette, scanlines and CRT grille)
     vec2 uv    = gl_FragCoord.xy / iResolution.xy;
-    vec3 tmp_color = texture2D(p3d_Texture0, uv).rgb;
     vec2 crtUV = CRTCurveUV( uv );
+    uv = uv * 0.7 + crtUV * 0.3;
+
+    vec3 pat = texture2D(pattern, uv * vec2(256, 256) * vec2(iResolution.x / iResolution.y, 1) * 1 + vec2(0, osg_FrameTime * 2)).rgb;
+
+    vec3 tmp_color = texture2D(p3d_Texture0, uv + (pat.xy - vec2(0.5, 0.5)) * 0.003).rgb
+                   + texture2D(p3d_Texture0, uv + (pat.yz - vec2(0.5, 0.5)) * 0.003).rgb;
     if ( crtUV.x < 0.0 || crtUV.x > 1.0 || crtUV.y < 0.0 || crtUV.y > 1.0 )
     {
         tmp_color = vec3( 0.0 );
     }
-    tmp_color = DrawVignette( tmp_color, crtUV );
+    tmp_color = DrawVignette( tmp_color, uv );
     tmp_color = DrawScanline( tmp_color, uv );
+
+    tmp_color *= pat * 1.5;
 
 	color 	= vec4( tmp_color, 1.0 );
     //gl_FragColor.w		= 1.0;

@@ -178,6 +178,8 @@ class Base(ShowBase):
         texture = buffer.get_texture()
         texture.set_magfilter(SamplerState.FT_nearest)
         texture.set_minfilter(SamplerState.FT_nearest)
+        texture.set_wrap_u(SamplerState.WM_clamp)
+        texture.set_wrap_v(SamplerState.WM_clamp)
         buffer.set_sort(-100)
         buffer.set_clear_color_active(True)
         buffer.set_clear_color(self.bg_color)
@@ -198,8 +200,10 @@ class Base(ShowBase):
         #tex = loader.load_texture("assets/noise.png")
         self.quad = self.manager.renderSceneInto(colortex=tex)
         self.quad.setShader(Shader.load(Shader.SL_GLSL, "crt.vert","crt.frag"))
-        self.quad.setShaderInput("iResolution", (1920,1080))
-        #self.quad.setShaderInput("iChannel0", tex)
+        self.quad.setShaderInput("iResolution", (base.win.getXSize(), base.win.getYSize()))
+        self.quad.setShaderInput("pattern", base.loader.load_texture("assets/crt.png"))
+        self.quad.get_texture().set_wrap_u(SamplerState.WM_clamp)
+        self.quad.get_texture().set_wrap_v(SamplerState.WM_clamp)
         base.accept("window-event", self.on_window_event)
 
     def on_window_event(self, win):
